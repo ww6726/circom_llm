@@ -4,23 +4,19 @@ include "matrix/matmul.circom";
 include "ml_components/ReLU.circom";
 include "ml_components/Linear.circom";
 include "util/fixedPoint.circom";
-template mm() {//this does add then mul
+template mm() {
     var m = 128;
     var n = 128;
     var p = 128;
     signal input a[m][n];
     signal input b[n][p];
-
     signal output c[m][p];
-
     component mm = matmul(m,n,p);
     mm.a <== a;
     mm.b <== b;
-
-
     c <== mm.c;
-
 }
+
 template relu(){
     signal input a;
     signal output out;
@@ -72,16 +68,6 @@ template mulThenAddtest(){
     fpm.b <== b;
     out <== fpm.out;
 }
-function div(a, b) {
-    var r = a;
-    var q = 0;
-    while (r >= b) {
-        r = r - b;
-        q = q + 1;
-    }
-    
-    return q;
-}
 function matmul_func(a,b){
     var m = 2;
     var n = 2;
@@ -95,11 +81,16 @@ function matmul_func(a,b){
   
     return c;
 }
-template divTest(){
+template test(){
+    var zero = 0;
+    var neg = -1;
+
     signal input a;
     signal input b;
+    signal b_neg <== zero - b;
+    log(b_neg*neg);
     signal output c;
-    c <== a+b;
+    c <== a*b;
     log(c);
 }
- component main = divTest();
+ component main = mm();       

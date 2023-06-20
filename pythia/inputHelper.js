@@ -93,6 +93,9 @@ function floatToQ(N,M,value) {
 }  
 function QToFloat(N, M, q_fixed) {
     var bits = UintToBits(N+M,q_fixed);
+    print(q_fixed);
+    print(bits);
+    print(N);
     var ret = 0;
     var power = N + M - 1 - M;
 
@@ -120,12 +123,11 @@ function truncation(N,M,bits){
 
 
 function test_conversion_old(){
-    const N = 6;
-    const M = 6;
+    const N = 4;
+    const M = 4;
     
-    const a = 34.51;
-    const b = 24.53;
-    
+    const a = 2.5;
+    const b = 3.4;
     
     var aValue = floatToQ(N,M,a);
     var bValue = floatToQ(N,M,b);
@@ -133,42 +135,40 @@ function test_conversion_old(){
     
     var cValue = aValue * bValue;
     var cbits = cValue.toString(2).padStart(2*(N+M), '0');
-
     cValue = truncation(N,M,cbits);
-    var c = QToFloat(2*N,N+M-(2*N),cValue);
+
+    var int_bitFinal = 2*N;
+    var frac_bitFinal = N+M-int_bitFinal;
+    var c = QToFloat(int_bitFinal,frac_bitFinal,cValue);
     
     console.log(`QN.M aValue: ${aValue}`);
     console.log(`QN.M bValue: ${bValue}`);
     console.log(`QN.M cValue: ${cValue}`);
-    
     console.log(`QN.M representation: ${c}`);
 }
 
 function test_conversion(){
-    const N = 3;
+    const N = 6;
     const M = 8;
-    
 
-
-    const a = 6.5625;
-    const b = 4.25;
+    const a = 0.5;
+    const b = 0.5;
     const sign = (a>=0 && b>=0) || (a<0 && b<0) ? 1: -1;  
     //step1 convert to 2's complement
     var aValue = floatToQ_signed(N,M,a);
     var bValue = floatToQ_signed(N,M,b);
-
+    print(aValue);
+    print(bValue);
 
     //step2 sign-extend to twice of (N+M+1)
     var aValue_bit = signExtend(UintToBits(N+M+1,aValue),N+M+1);
     var bValue_bit = signExtend(UintToBits(N+M+1,bValue),N+M+1);
-    //step3: get the right most twice bit length 
+    //step3: get the right most twice bit length after multiplication
     var cValue_bit = multiplyTwoExtended(aValue_bit,bValue_bit,2*(N+M+1));
-    print(cValue_bit);
     //step4: get convert from 2s complement back to fix-point representation
     cValue_bit = twosComplementToBinary(cValue_bit);
 
     //step5: find desired bits for int and float and done;
-
     var cValue = sign* parseInt(cValue_bit,2)/2**16;
 
     console.log(`QN.M aValue: ${aValue_bit}`);
@@ -178,14 +178,13 @@ function test_conversion(){
 
 }
 
-// test_conversion();
-test_conversion();
-
+// test_conversion_old();
 
 
 //===================for unit tests===========================
 module.exports = {
     floatToQ,
-    QToFloat
+    QToFloat,
+    floatToQ_signed
     
 };

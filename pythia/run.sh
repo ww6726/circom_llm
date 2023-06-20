@@ -12,15 +12,15 @@ json_content='{
   "bias": [["1","2","3"]]
 }'
 json_content='{
-  "a": "64",
-  "b": "35"
+  "a": "-128",
+  "b": "128"
 }'
 
 echo "$json_content" > input.json
 
-## auto-generate input for mm
-# node ../generate_input.js
-# cp ../input.json .
+# auto-generate input for mm
+node ../generate_input.js
+cp ../input.json .
 
 node generate_witness.js circuit.wasm input.json witness.wtns
 

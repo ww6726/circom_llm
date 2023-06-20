@@ -63,7 +63,7 @@ template Bits2Num(n) {
         lc1 += in[i] * e2;
         e2 = e2 + e2;
     }
-
+    
     lc1 ==> out;
 }
 

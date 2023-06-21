@@ -1,9 +1,9 @@
 pragma circom 2.0.3;
-include "matrix/innerProd.circom";
-include "matrix/matmul.circom";
-include "ml_components/ReLU.circom";
-include "ml_components/Linear.circom";
-include "util/fixedPoint.circom";
+include "circuits/matrix/innerProd.circom";
+include "circuits/matrix/matmul.circom";
+include "circuits/ml_components/ReLU.circom";
+include "circuits/ml_components/Linear.circom";
+include "circuits/util/fixedPoint.circom";
 template mm() {
     var m = 128;
     var n = 128;

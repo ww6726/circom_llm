@@ -5,7 +5,6 @@ include "../circomlib/comparators.circom";
 include "../circomlib/switcher.circom";
 
 include "isPositive.circom";
-include "sqrt.circom";
 /**
  * Calculates the fixpoint product of two fix point number represented by 8 bits each.
  *
@@ -72,7 +71,6 @@ template truncate(bits_total, bits_want){
     component b2n = Bits2Num(bits_want);
     for(var i =0;i<bits_want;i++){
         b2n.in[i] <== afterTruncate[i];
-        log(b2n.in[i]);
     }
     var abs_bit = 2*sign -1;
     out <== b2n.out*abs_bit;
@@ -112,18 +110,28 @@ template fixPointMult(n,m){
     out <== b2n.out;
 }
 
-template fixPointMultSigned(n,m){
+template fixPointMultSigned_old(n,m){
     signal input a;
     signal input b;
     signal output c;
+    signal temp;
+    temp <== a*b;
+    component tc = truncate(2*(n+m),2*(n+m) -m);// first is how many bits in total. second is take left most how many
+    tc.in <== temp;
+    c <== tc.out;
+}
+template fixPointMultSigned(){
+    signal input a;
+    signal input b;
+    signal output c;
+    var n = 4;
+    var m = 4;
 
     signal temp;
     temp <== a*b;
     component tc = truncate(2*(n+m),2*(n+m) -m);// first is how many bits in total. second is take left most how many
     tc.in <== temp;
     c <== tc.out;
-
-    log(c);
 }
 template binLeftRightFlip(n){
     signal input in[n];
@@ -200,7 +208,6 @@ template fixPointDivSigned(n,m){
     longDiv.divisor <== divisor_bin;
     //waiting for output
 
-
 }
 template fixPointedSum(n){
     signal input in[n];
@@ -211,14 +218,14 @@ template fixPointedSum(n){
     }
     out <== sum;
 }
-template fixPointAddSigned(n,m){
+template fixPointAddSigned(){
     signal input a;
     signal input b;
     signal output c;
     c <== a+b;
 }
 
-template fixPointSubSigned(n,m){
+template fixPointSubSigned(){
     signal input a;
     signal input b;
     signal output c;
@@ -231,26 +238,12 @@ template fixPointDiv(){
     signal input b;
     signal input q;
     signal input r;
-
     a === q*b + r;
 }
-template testAddMult(n,m){
-    signal input a;
-    signal input b;
-    signal output q;
-    signal output r;
 
-    component div = FieldDivide();
-    div.x <== a;
-    div.y <== b;
+template sqrt(){
+    signal input in;
+    signal input root;
 
-    log(a);
-    log(b);
-    q <-- (a\b);
-    r <-- a - q*b;
-    b*q + r === a;
-
-    log(q);
-    log(r);
-
+    in === root*root;
 }

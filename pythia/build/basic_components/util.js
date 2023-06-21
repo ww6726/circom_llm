@@ -93,9 +93,9 @@ function floatToQ(N,M,value) {
 }  
 function QToFloat(N, M, q_fixed) {
     var bits = UintToBits(N+M,q_fixed);
-    print(q_fixed);
-    print(bits);
-    print(N);
+    // print(q_fixed);
+    // print(bits);
+    // print(N);
     var ret = 0;
     var power = N + M - 1 - M;
 

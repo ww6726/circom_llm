@@ -2,9 +2,9 @@ const fs = require('fs');
 
 
 
-const m = 128;
-const n = 128;
-const p = 128;
+const m = 4;
+const n = 4;
+const p = 4;
 
 const matrixA = [];
 const matrixB = [];

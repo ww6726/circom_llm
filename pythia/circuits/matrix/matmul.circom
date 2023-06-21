@@ -1,6 +1,7 @@
 pragma circom 2.0.3;
 include "matEleMul.circom";
 include "matEleSum.circom";
+include "../util/fixedPoint.circom";
 template matmul(m,n,p){
     signal input a[m][n];
     signal input b[n][p];

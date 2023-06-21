@@ -12,7 +12,6 @@ template matEleSum(m,n){
                 sum[idx] <== a[i][j] + sum[idx-1];
             }
             idx++;
-
         }
     }
     out <== sum[m*n-1];

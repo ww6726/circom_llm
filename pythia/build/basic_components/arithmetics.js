@@ -8,7 +8,7 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {floatToQ,QToFloat,floatToQ_signed} = require('util');
+const {floatToQ} = require('util');
 
 async function add(a, b) {
     let circuit;
@@ -46,14 +46,16 @@ async function sub(a, b) {
 async function div(a, b) {
     let circuit;
     circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "div.circom"));
-    var quotient = a / b;
+    var quotient = Math.floor(a / b);
     var remainder = a - b * quotient;
     const INPUT = {
         "a": a,
         "b": b,
         "q": quotient,
-        "r": remainder,
+        "r": remainder
     }
+
+
     const witness = await circuit.calculateWitness(INPUT, true);
     return quotient;
 }

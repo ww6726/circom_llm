@@ -8,16 +8,16 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {floatToQ,QToFloat,floatToQ_signed} = require('util');
+const {getShape,truncate} = require('../basic_components/util');
 
 const fs = require('fs');
 
-function generateCircomFile(n, m) {
+function generateCircomFile(n, m,p,fracBits) {
     const content = `pragma circom 2.0.0;
   include "../../circuits/ml_components/Linear.circom";
   
   
-  component main = Linear(${n},${m});`;
+  component main = Linear(${n},${m},${p},${fracBits});`;
     fs.writeFileSync(path.join(__dirname, "../circom_runner", "linear.circom"), content);
 }
 function matrixMultiplication(matrixA, matrixB) {
@@ -59,48 +59,29 @@ function matrixMultiplication(matrixA, matrixB) {
   
     return result;
   }
-  function scalarDivide(matrix) {
-    const rows = matrix.length;
-    const columns = matrix[0].length;
   
-    const result = new Array(rows);
-    for (let i = 0; i < rows; i++) {
-      result[i] = new Array(columns);
-      for (let j = 0; j < columns; j++) {
-        result[i][j] = matrix[i][j]/(2**8);
-      }
-    }
   
-    return result;
-  }
-async function linear(input, weight, bias, inNum, outNum) {
+  // [n][inNum] * [inNum][outNum] = [n][outNum]
+async function linear(input, weight, bias, n, inNum, outNum, fracBits) {
     let circuit;
-    generateCircomFile(inNum,outNum);
+    generateCircomFile(n,inNum,outNum,fracBits);
     circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "linear.circom"));
-
+    
     const INPUT = {
         "in": input,
         "weights": weight,
         "bias": bias,
     }
-    // var ret = addBias(matrixMultiplication(input,weight),bias);
-    // ret = scalarDivide(ret);
-    // console.log(ret);
-
-
-
     const witness = await circuit.calculateWitness(INPUT, true);
-    const N = 4;
-    const M = 4;
     var ret = [];
-
-    const neg = Scalar.fromString("-1");
-    const shift = Scalar.fromString("8");
-    for(let i = 1;i < outNum+1;i ++){
-        // console.log(parseInt(Fr.toString(witness[i])));
-        // console.log(witness[i] >> shift);
-        ret[i-1] = witness[i]//truncate before feeding to next
+    var idx = 1;
+    for(let i = 0;i <n;i++){
+      ret[i] = [];
+      for(let j = 0;j <outNum;j++){
+        ret[i][j] = (witness[idx++]);
+      }
     }
+    ret = truncate(ret,fracBits);
     return ret;
 }
 

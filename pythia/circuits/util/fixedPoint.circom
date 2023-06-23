@@ -238,6 +238,12 @@ template fixPointDiv(){
     signal input b;
     signal input q;
     signal input r;
+
+    component lt = LessThan(8);
+    lt.in[0] <== r;
+    lt.in[1] <== b;
+    signal compare_result <== lt.out;
+    compare_result === 1;
     a === q*b + r;
 }
 

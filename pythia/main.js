@@ -10,7 +10,24 @@ const assert = chai.assert;
 const {floatToQ,QToFloat,floatToQ_signed} = require('./build/basic_components/util');
 const {add,sub,mul,div,sqrt} = require('./build/basic_components/arithmetics');
 const {linear} = require('./build/basic_components/linear');
+const {attn} = require('./build/llm_components/attention');
 
+
+function getShape(data) {
+    if (Array.isArray(data)) {
+      var shape = [];
+      var currentLevel = data;
+  
+      while (Array.isArray(currentLevel)) {
+        shape.push(currentLevel.length);
+        currentLevel = currentLevel[0];
+      }
+  
+      return shape;
+    } else {
+      return [];
+    }
+  }
 describe("main function", function () {
     this.timeout(100000000);
 
@@ -19,85 +36,51 @@ describe("main function", function () {
         const N = 4;
         const M = 4;
 
-        const inNum = 2;
-        const outNum = 1;
+        const n = 32;
+        const inNum = 32;
+        const outNum = 96;
+
+        var input_ = [];
+        var weight_ = [];
+        var bias_ = [];
+
         var input = [];
         var weight = [];
         var bias = [];
 
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < n; i++) {
             input[i] = [];
+            input_[i] = [];
+
             for (let j = 0; j < inNum; j++) {
-                input[i][j] = floatToQ(N,M,1.32);
-                // input[i][j] = 1;
+                const number = 0.34242
+                input[i][j] = floatToQ(N,M,number);
+                input_[i][j] = number;
             }
         }
         for (let i = 0; i < inNum; i++) {
             weight[i] = [];
+            weight_[i] = [];
+
             for (let j = 0; j < outNum; j++) {
-                weight[i][j] = floatToQ(N,M,1.23);
-                // weight[i][j] = 1;
+                const number = -1.234236
+                weight[i][j] = floatToQ(N,M,number);
+                weight_[i][j] = number;
             }
         }
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < n; i++) {
             bias[i] = [];
+            bias_[i] = [];
+
             for (let j = 0; j < outNum; j++) {
-                bias[i][j] = floatToQ(N,M,1.39);
-                // bias[i][j] = 1;
+                const number = -0.3329;
+                bias[i][j] = floatToQ(N,M,number);
+                bias_[i][j] = number;
             }
         }
-        console.log(input);
-        console.log(weight);
-        console.log(bias);
 
-        var result;
-        result = await linear(input,weight,bias,inNum,outNum);
+        var attention = attn(input, weight, bias,n,inNum, outNum,M);
 
-
-
-
-        // const INPUT = {
-        //     "a": a,
-        //     "b": b,
-        // }
-        // const Input16BitFixedPoint = {};
-        // for (const key in INPUT) {
-
-        //     if(INPUT[key]<0){
-        //         INPUT[key] = INPUT[key]*-1
-        //         Input16BitFixedPoint[key] = F - Scalar.fromString(floatToQ(N,M,INPUT[key]));
-        //     }else{
-        //         Input16BitFixedPoint[key] = Scalar.fromString(floatToQ(N,M,INPUT[key]));
-        //     }
-        // }
-        // const witness = await circuit.calculateWitness(Input16BitFixedPoint, true);
-        // var quotient = witness[1];
-        // var remainder = witness[2];
-
-        // quotient = parseInt(Fr.toString(quotient));
-        // remainder = parseInt(Fr.toString(remainder));
-
-        // console.log("======================================");
-        // console.log(Fr.toString(quotient));
-        // if(quotient < 0){
-        //     console.log("quotient: ", -QToFloat(2*N,M,parseInt(Fr.toString(-quotient))));
-        // }
-        // else{
-        //     console.log("quotient: ", QToFloat(2*N,M,parseInt(Fr.toString(quotient))));
-        // }
-
-        // if(remainder < 0){
-        //     console.log("remainder: ", -QToFloat(2*N,M,parseInt(Fr.toString(-remainder))));
-        // }
-        // else{
-        //     console.log("remainder: ", QToFloat(2*N,M,parseInt(Fr.toString(remainder))));
-        // }
-        // console.log(QToFloat(2*N,N+M-(2*N),parseInt(Fr.toString(output))));
-        // assert(parseFloat(Fr.toString(output)),0.035)
-
-
-        // assert(Fr.eq(Fr.e(witness[0]),Fr.e(1)));
-        // assert(Fr.eq(Fr.e(witness[1]),Fr.e(1*4+2*5+3*6+10)));
-        // assert(Fr.eq(Fr.e(witness[2]),Fr.e(1*7+2*8+3*9+11)));
+     
     });
 });

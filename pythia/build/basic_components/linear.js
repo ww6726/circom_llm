@@ -66,7 +66,6 @@ async function linear(input, weight, bias, n, inNum, outNum, fracBits) {
     let circuit;
     generateCircomFile(n,inNum,outNum,fracBits);
     circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "linear.circom"));
-    
     const INPUT = {
         "in": input,
         "weights": weight,
@@ -81,7 +80,7 @@ async function linear(input, weight, bias, n, inNum, outNum, fracBits) {
         ret[i][j] = (witness[idx++]);
       }
     }
-    ret = truncate(ret,fracBits);
+    // ret = truncate(ret,fracBits);
     return ret;
 }
 

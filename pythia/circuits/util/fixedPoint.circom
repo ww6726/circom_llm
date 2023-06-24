@@ -37,13 +37,14 @@ template fixPointMultOld(n){
 
 template absoluteValue(){
     signal input in;
-    signal output out;
+    signal output out[2];
     
     component ispositive = isPositive();
     ispositive.in <== in;
     signal sign <== ispositive.out; // 0 - neg    1 - pos
     var abs_bit = 2*sign -1;
-    out <== abs_bit * in;
+    out[0] <== abs_bit * in;
+    out[1] <== sign;
 
 }
 
@@ -52,13 +53,11 @@ template truncate(bits_total, bits_want){
     signal input in;
     signal output out;
 
-    component ispositive = isPositive();
-    ispositive.in <== in;
-    signal sign <== ispositive.out; // 0 - neg    1 - pos
+
     component abs = absoluteValue();
     abs.in <== in;
-    signal in_abs <== abs.out;
-
+    signal in_abs <== abs.out[0];
+    signal sign <== abs.out[1];
     component n2b = Num2Bits(bits_total);//result has twice the bit. we need twice the bits to represent
     n2b.in <== in_abs;
 
@@ -72,6 +71,11 @@ template truncate(bits_total, bits_want){
     for(var i =0;i<bits_want;i++){
         b2n.in[i] <== afterTruncate[i];
     }
+    
+    // var abs_bit = 2*sign -1;
+    // out <-- in_abs>>4*abs_bit;
+
+
     var abs_bit = 2*sign -1;
     out <== b2n.out*abs_bit;
 

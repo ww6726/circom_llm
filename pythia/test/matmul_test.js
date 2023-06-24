@@ -46,8 +46,9 @@ describe("Matrix multiplication test", function () {
         console.log(out_);
 
  
-        console.log("==================== Circuit ==========================");
         const out = await matmul(a,b,fracBits);
+        console.log("==================== Circuit ==========================");
+
         for (let i = 0; i < m; i++) {
             for (let j = 0; j < p; j++) {
                 out[i][j] = parseFloat(Fr.toString(out[i][j])) / (2**(fracBits));

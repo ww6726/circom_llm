@@ -12,12 +12,12 @@ const {getShape,matrixMultiplication,truncate} = require('../basic_components/ut
 
 const fs = require('fs');
 
-function generateCircomFile(m,n,p) {
+function generateCircomFile(m,n,p,fracBits) {
     const content = `pragma circom 2.0.0;
   include "../../circuits/matrix/matmul.circom";
   
   
-  component main = matmul(${m},${n},${p});`;
+  component main = matmul(${m},${n},${p},${fracBits});`;
     fs.writeFileSync(path.join(__dirname, "../circom_runner", "matmul.circom"), content);
 }
   // [n][inNum] * [inNum][outNum] = [n][outNum]
@@ -25,12 +25,12 @@ async function matmul(a, b, fracBits) {
     const m = a.length;
     const n = a[0].length;
     const p = b[0].length;
-
-
     let circuit;
-    generateCircomFile(m,n,p);
+    generateCircomFile(m,n,p,fracBits);
     circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "matmul.circom"));
-    
+    console.log(circuit.dir);
+    console.log(circuit.constraints);
+    console.log("====");
     const INPUT = {
         "a": a,
         "b": b,
@@ -46,7 +46,7 @@ async function matmul(a, b, fracBits) {
         ret[i][j] = (witness[idx++]);
       }
     }
-    ret = truncate(ret,fracBits);
+    // ret = truncate(ret,fracBits);
     return ret;
 }
 

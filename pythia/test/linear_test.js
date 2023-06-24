@@ -58,7 +58,7 @@ describe("test linear module", function () {
     it("test", async () => {
         // const circuit = await wasm_tester(path.join(__dirname, "circuits", "FixedPoint_test.circom"));
         const N = 4;
-        const M = 12;// this is number of bits to represent fractions
+        const M = 4;// this is number of bits to represent fractions
 
         const n = 2;
         const inNum = 2;

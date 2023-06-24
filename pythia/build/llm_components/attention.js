@@ -12,7 +12,8 @@ const {getShape,floatToQ,QToFloat,floatToQ_signed} = require('../basic_component
 const {linear} = require('../basic_components/linear');
 const {split} = require('../basic_components/split');
 const {transpose} = require('../basic_components/transpose');
-const { matmul } = require("../basic_components/matmul");
+const {matmul } = require("../basic_components/matmul");
+const fs = require('fs');
 
 function splitToHeads(qkv, headNum) {
   const heads = [];
@@ -49,27 +50,37 @@ function splitQKV(qkv_head) {
 
   return q_k_v;
 }
+
+
+function generateCircomFile(n, m,p,fracBits) {
+  const content = `pragma circom 2.0.0;
+include "../../circuits/llm_components/attention.circom";
+
+component main = attention(${n},${m},${p},${fracBits});`;
+  fs.writeFileSync(path.join(__dirname, "../circom_runner", "attention.circom"), content);
+}
 async function attn(input, weight, bias,n,inNum, outNum, fracBits) {
-  const query_key_value = await linear(input, weight, bias,n,inNum, outNum,fracBits);
-  const headsAll = await split(query_key_value,query_key_value.length,query_key_value[0].length,8);
-  for(let i = 0;i < 1;i++){
-    const head = headsAll[i];
-    const q_k_v = await split(head,head.length,head[0].length,3);
-    const query = q_k_v[0];
-    const key   = q_k_v[1];
-    const value = q_k_v[2];
-    const keyT = await transpose(key);
-    const queryKT = await matmul(query,keyT,fracBits);
-    console.log(getShape(queryKT));
+  // const query_key_value = await linear(input, weight, bias,n,inNum, outNum,fracBits);
+  // const headsAll = await split(query_key_value,query_key_value.length,query_key_value[0].length,8);
+  // for(let i = 0;i < 1;i++){
+  //   const head = headsAll[i];
+  //   const q_k_v = await split(head,head.length,head[0].length,3);
+  //   const query = q_k_v[0];
+  //   const key   = q_k_v[1];
+  //   const value = q_k_v[2];
+  //   const keyT = await transpose(key);
+  //   const queryKT = await matmul(query,keyT,fracBits);
+  //   console.log(getShape(queryKT));
+  // }
+  generateCircomFile(n,inNum,outNum,fracBits);
+  circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "attention.circom"));
+
+  const INPUT = {
+      "in_first_layer": input,
+      "weights_first_layer": weight,
+      "bias_first_layer": bias,
   }
-  // const heads = splitToHeads(query_key_value,8);
-  // const qkv_head = heads[0];
-  // const q_k_v = splitQKV(qkv_head);
-  // const q = q_k_v[0];
-  // const k = q_k_v[1];
-  // const v = q_k_v[2];
-
-
+  const witness = await circuit.calculateWitness(INPUT, true);
 }
 module.exports = {
   attn,

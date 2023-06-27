@@ -7,8 +7,8 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {floatToQ,getShape} = require('../build/basic_components/util');
-const {split} = require('../build/basic_components/split');
+const {floatToQ,getShape} = require('../build_circuit/basic_components/util');
+const {split} = require('../build_circuit/basic_components/split');
 
 describe("test split", function () {
     this.timeout(100000000);

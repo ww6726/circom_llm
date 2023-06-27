@@ -8,9 +8,9 @@ const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
 const {floatToQ,getShape,QToFloat,floatToQ_signed} = require('../build/basic_components/util');
-const {add,sub,mul,div,sqrt} = require('../build/basic_components/arithmetics');
-const {linear} = require('../build/basic_components/linear');
-const {attn} = require('../build/llm_components/attention');
+const {add,sub,mul,div,sqrt} = require('../build_circuit/basic_components/arithmetics');
+const {linear} = require('../build_circuit/basic_components/linear');
+const {attn} = require('../build_circuit/llm_components/attention');
 
 function matrixMultiplication(matrixA, matrixB) {
     const rowsA = matrixA.length;

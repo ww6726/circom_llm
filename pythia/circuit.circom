@@ -83,12 +83,34 @@ include "circuits/util/fixedPoint.circom";
   
 //     return c;
 // }
-template test(){
 
+template div_test2(){
+    signal input x;
+    signal input y;
+    signal input z;
+    signal input b;
+    signal input q;
+    signal input r;
+    signal temp;
+    temp <== x*y;
+    signal a <== temp + z; 
+    signal output out;
+    component div = fixPointDiv();
+    div.a <== a;
+    div.b <== b;
+    div.q <== q;
+    div.r <== r;
+    out <== a;
+}
+
+template div_test(){
     signal input a;
     signal input b;
     signal input q;
     signal input r;
+
+
+
     signal output out;
     component div = fixPointDiv();
     div.a <== a;
@@ -97,7 +119,5 @@ template test(){
     div.r <== r;
     out <== q;
 
-
-
 }
- component main = test();       
+ component main = div_test2();       

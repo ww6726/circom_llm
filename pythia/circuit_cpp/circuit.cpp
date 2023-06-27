@@ -9,13 +9,13 @@ void LessThan_1_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string
 void LessThan_1_run(uint ctx_index,Circom_CalcWit* ctx);
 void fixPointDiv_2_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
 void fixPointDiv_2_run(uint ctx_index,Circom_CalcWit* ctx);
-void test_3_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
-void test_3_run(uint ctx_index,Circom_CalcWit* ctx);
+void test2_3_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather);
+void test2_3_run(uint ctx_index,Circom_CalcWit* ctx);
 Circom_TemplateFunction _functionTable[4] = { 
 Num2Bits_0_run,
 LessThan_1_run,
 fixPointDiv_2_run,
-test_3_run };
+test2_3_run };
 Circom_TemplateFunction _functionTableParallel[4] = { 
 NULL,
 NULL,
@@ -23,15 +23,15 @@ NULL,
 NULL };
 uint get_main_input_signal_start() {return 2;}
 
-uint get_main_input_signal_no() {return 4;}
+uint get_main_input_signal_no() {return 6;}
 
-uint get_total_signal_no() {return 24;}
+uint get_total_signal_no() {return 28;}
 
 uint get_number_of_components() {return 4;}
 
 uint get_size_of_input_hashmap() {return 256;}
 
-uint get_size_of_witness() {return 12;}
+uint get_size_of_witness() {return 15;}
 
 uint get_size_of_constants() {return 5;}
 
@@ -302,13 +302,13 @@ PFrElement aux_dest = &signalValues[mySignalStart + 4];
 // end load src
 Fr_copy(aux_dest,&ctx->signalValues[ctx->componentMemory[mySubcomponents[0]].signalStart + 0]);
 }
-Fr_eq(&expaux[0],&signalValues[mySignalStart + 4],&circuitConstants[2]); // line circom 246
-if (!Fr_isTrue(&expaux[0])) std::cout << "Failed assert in template/function " << myTemplateName << " line 246. " <<  "Followed trace of components: " << ctx->getTrace(myId) << std::endl;
+Fr_eq(&expaux[0],&signalValues[mySignalStart + 4],&circuitConstants[2]); // line circom 250
+if (!Fr_isTrue(&expaux[0])) std::cout << "Failed assert in template/function " << myTemplateName << " line 250. " <<  "Followed trace of components: " << ctx->getTrace(myId) << std::endl;
 assert(Fr_isTrue(&expaux[0]));
-Fr_mul(&expaux[3],&signalValues[mySignalStart + 2],&signalValues[mySignalStart + 1]); // line circom 247
-Fr_add(&expaux[2],&expaux[3],&signalValues[mySignalStart + 3]); // line circom 247
-Fr_eq(&expaux[0],&signalValues[mySignalStart + 0],&expaux[2]); // line circom 247
-if (!Fr_isTrue(&expaux[0])) std::cout << "Failed assert in template/function " << myTemplateName << " line 247. " <<  "Followed trace of components: " << ctx->getTrace(myId) << std::endl;
+Fr_mul(&expaux[3],&signalValues[mySignalStart + 2],&signalValues[mySignalStart + 1]); // line circom 251
+Fr_add(&expaux[2],&expaux[3],&signalValues[mySignalStart + 3]); // line circom 251
+Fr_eq(&expaux[0],&signalValues[mySignalStart + 0],&expaux[2]); // line circom 251
+if (!Fr_isTrue(&expaux[0])) std::cout << "Failed assert in template/function " << myTemplateName << " line 251. " <<  "Followed trace of components: " << ctx->getTrace(myId) << std::endl;
 assert(Fr_isTrue(&expaux[0]));
 for (uint i = 0; i < 1; i++){
 uint index_subc = ctx->componentMemory[ctx_index].subcomponents[i];
@@ -316,17 +316,17 @@ if (index_subc != 0)release_memory_component(ctx,index_subc);
 }
 }
 
-void test_3_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather){
+void test2_3_create(uint soffset,uint coffset,Circom_CalcWit* ctx,std::string componentName,uint componentFather){
 ctx->componentMemory[coffset].templateId = 3;
-ctx->componentMemory[coffset].templateName = "test";
+ctx->componentMemory[coffset].templateName = "test2";
 ctx->componentMemory[coffset].signalStart = soffset;
-ctx->componentMemory[coffset].inputCounter = 4;
+ctx->componentMemory[coffset].inputCounter = 6;
 ctx->componentMemory[coffset].componentName = componentName;
 ctx->componentMemory[coffset].idFather = componentFather;
 ctx->componentMemory[coffset].subcomponents = new uint[1]{0};
 }
 
-void test_3_run(uint ctx_index,Circom_CalcWit* ctx){
+void test2_3_run(uint ctx_index,Circom_CalcWit* ctx){
 FrElement* signalValues = ctx->signalValues;
 u64 mySignalStart = ctx->componentMemory[ctx_index].signalStart;
 std::string myTemplateName = ctx->componentMemory[ctx_index].templateName;
@@ -337,14 +337,14 @@ u32* mySubcomponents = ctx->componentMemory[ctx_index].subcomponents;
 bool* mySubcomponentsParallel = ctx->componentMemory[ctx_index].subcomponentsParallel;
 FrElement* circuitConstants = ctx->circuitConstants;
 std::string* listOfTemplateMessages = ctx->listOfTemplateMessages;
-FrElement expaux[1];
+FrElement expaux[3];
 FrElement lvar[0];
 uint sub_component_aux;
 uint index_multiple_eq;
 {
 uint aux_create = 0;
 int aux_cmp_num = 0+ctx_index+1;
-uint csoffset = mySignalStart+5;
+uint csoffset = mySignalStart+9;
 for (uint i = 0; i < 1; i++) {
 std::string new_cmp_name = "div";
 fixPointDiv_2_create(csoffset,aux_cmp_num,ctx,new_cmp_name,myId);
@@ -354,12 +354,26 @@ aux_cmp_num += 3;
 }
 }
 {
+PFrElement aux_dest = &signalValues[mySignalStart + 7];
+// load src
+Fr_mul(&expaux[0],&signalValues[mySignalStart + 1],&signalValues[mySignalStart + 2]); // line circom 95
+// end load src
+Fr_copy(aux_dest,&expaux[0]);
+}
+{
+PFrElement aux_dest = &signalValues[mySignalStart + 8];
+// load src
+Fr_add(&expaux[0],&signalValues[mySignalStart + 7],&signalValues[mySignalStart + 3]); // line circom 96
+// end load src
+Fr_copy(aux_dest,&expaux[0]);
+}
+{
 uint cmp_index_ref = 0;
 {
 PFrElement aux_dest = &ctx->signalValues[ctx->componentMemory[mySubcomponents[cmp_index_ref]].signalStart + 0];
 // load src
 // end load src
-Fr_copy(aux_dest,&signalValues[mySignalStart + 1]);
+Fr_copy(aux_dest,&signalValues[mySignalStart + 8]);
 }
 // no need to run sub component
 assert(ctx->componentMemory[mySubcomponents[cmp_index_ref]].inputCounter -= 1);
@@ -370,7 +384,7 @@ uint cmp_index_ref = 0;
 PFrElement aux_dest = &ctx->signalValues[ctx->componentMemory[mySubcomponents[cmp_index_ref]].signalStart + 1];
 // load src
 // end load src
-Fr_copy(aux_dest,&signalValues[mySignalStart + 2]);
+Fr_copy(aux_dest,&signalValues[mySignalStart + 4]);
 }
 // no need to run sub component
 assert(ctx->componentMemory[mySubcomponents[cmp_index_ref]].inputCounter -= 1);
@@ -381,7 +395,7 @@ uint cmp_index_ref = 0;
 PFrElement aux_dest = &ctx->signalValues[ctx->componentMemory[mySubcomponents[cmp_index_ref]].signalStart + 2];
 // load src
 // end load src
-Fr_copy(aux_dest,&signalValues[mySignalStart + 3]);
+Fr_copy(aux_dest,&signalValues[mySignalStart + 5]);
 }
 // no need to run sub component
 assert(ctx->componentMemory[mySubcomponents[cmp_index_ref]].inputCounter -= 1);
@@ -392,7 +406,7 @@ uint cmp_index_ref = 0;
 PFrElement aux_dest = &ctx->signalValues[ctx->componentMemory[mySubcomponents[cmp_index_ref]].signalStart + 3];
 // load src
 // end load src
-Fr_copy(aux_dest,&signalValues[mySignalStart + 4]);
+Fr_copy(aux_dest,&signalValues[mySignalStart + 6]);
 }
 // need to run sub component
 assert(!(ctx->componentMemory[mySubcomponents[cmp_index_ref]].inputCounter -= 1));
@@ -402,7 +416,7 @@ fixPointDiv_2_run(mySubcomponents[cmp_index_ref],ctx);
 PFrElement aux_dest = &signalValues[mySignalStart + 0];
 // load src
 // end load src
-Fr_copy(aux_dest,&signalValues[mySignalStart + 3]);
+Fr_copy(aux_dest,&signalValues[mySignalStart + 8]);
 }
 for (uint i = 0; i < 1; i++){
 uint index_subc = ctx->componentMemory[ctx_index].subcomponents[i];
@@ -411,7 +425,7 @@ if (index_subc != 0)release_memory_component(ctx,index_subc);
 }
 
 void run(Circom_CalcWit* ctx){
-test_3_create(1,0,ctx,"main",0);
-test_3_run(0,ctx);
+test2_3_create(1,0,ctx,"main",0);
+test2_3_run(0,ctx);
 }
 

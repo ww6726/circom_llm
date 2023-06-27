@@ -6,25 +6,31 @@ circom circuit.circom --r1cs --wasm --sym --c
 #generate the witness file
 cd circuit_js
 #create an input file in circuit_js
+
+
+# json_content='{
+
+#   "a": "4",
+#   "b": "3",
+#   "q": "1",
+#   "r": "1"
+# }'
+
 json_content='{
-  "in": [["1","2"]],
-  "weights": [["1","2","3"],["4","5","6"]],
-  "bias": [["1","2","3"]]
-}'
-json_content='{
-  "a": "3",
-  "b": "2",
+  "x": "1",
+  "y": "1",
+  "z": "3",
+  "b": "3",
   "q": "1",
   "r": "1"
 }'
-
 echo "$json_content" > input.json
 
 # # auto-generate input for mm
 # node ../generate_input.js
 # cp ../input.json .
 
-# node generate_witness.js circuit.wasm input.json witness.wtns
+node generate_witness.js circuit.wasm input.json witness.wtns
 #enter circuit_cpp and compute the witness; make sure to move input.json here as well
 cd ../circuit_cpp
 make

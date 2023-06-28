@@ -88,7 +88,41 @@ function divideByConstant(matrix, constant){
 
   return dividedMatrix;
   }
+  function rotateHalf(x) {
+    const halfIndex = Math.floor(x.length / 2);
+    const x1 = x.slice(0, halfIndex);
+    const x2 = x.slice(halfIndex);
 
+    const negatedX2 = x2.map(subArray => subArray.map(value => -value));
+    const rotated = negatedX2.concat(x1);
+
+    return rotated;
+}
+function applyRotaryPosEmb(q, k, cos, sin, positionIds) {
+  const gatherIndices = positionIds.map(row => row.map(value => [value])); // [bs, 1, seq_len, 1]
+  const gatherIndicesRepeated = gatherIndices.map(row => row.map(value => value.repeat(cos[0].length)));
+
+  const repeatedCos = cos.map(row => row.map(value => value.repeat(gatherIndices.length, 1)));
+  const repeatedSin = sin.map(row => row.map(value => value.repeat(gatherIndices.length, 1)));
+
+  const qEmbed = q.map((qRow, i) => {
+      return qRow.map((qValue, j) => {
+          const qCos = qValue * repeatedCos[i][j];
+          const qSin = rotateHalf(qValue) * repeatedSin[i][j];
+          return qCos + qSin;
+      });
+  });
+
+  const kEmbed = k.map((kRow, i) => {
+      return kRow.map((kValue, j) => {
+          const kCos = kValue * repeatedCos[i][j];
+          const kSin = rotateHalf(kValue) * repeatedSin[i][j];
+          return kCos + kSin;
+      });
+  });
+
+  return [qEmbed, kEmbed];
+}
 function attn(input, weight, bias,n,inNum, outNum, fracBits) {
   const query_key_value = linear(input, weight, bias,n,inNum, outNum,fracBits);
   const headsAll = splitToHeads(query_key_value,8);
@@ -100,9 +134,11 @@ function attn(input, weight, bias,n,inNum, outNum, fracBits) {
     const value = q_k_v[2];
     const keyT = transposeMatrix(key);
     const queryKT = matrixMultiplication(query,keyT);
-    const softMaxOut =  softmax(divideByConstant(queryKT,8));
-  }
+    return(divideByConstant(queryKT,8));
+    return queryKT;
 
+    // const softMaxOut =  softmax(divideByConstant(queryKT,8));
+  }
 }
 module.exports = {
   attn,

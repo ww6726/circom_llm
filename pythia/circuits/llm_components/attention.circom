@@ -11,7 +11,7 @@ template attention(n,m,p,fracbits){
     signal input in_first_layer[n][m];
     signal input weights_first_layer[m][p];
     signal input bias_first_layer[n][p];
-    signal output out;
+    signal output out[n][n];
     component linear_qkv = Linear(n,m,p,fracbits);
 
     linear_qkv.in <== in_first_layer;
@@ -52,8 +52,8 @@ template attention(n,m,p,fracbits){
         signal QKT[n][n]  <== mm_QKT.c;
 
     // }
-
-    out <== 2;
+    log("output is done");
+    out <== QKT;
 
 }
 

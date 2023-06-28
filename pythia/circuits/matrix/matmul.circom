@@ -28,7 +28,7 @@ template matmul(m,n,p,fracbits){
     }   
 
     //truncation
-    var bitsTotal = 32;
+    var bitsTotal = 90;
     component trun[m][p];
     for(var i=0;i<m;i++){
         for(var j=0;j<p;j++){

@@ -25,6 +25,7 @@ component main = attention(${n},${m},${p},${fracBits});`;
   fs.writeFileSync(path.join(__dirname, "../circom_runner", "attention.circom"), content);
 }
 async function attn(input, weight, bias,n,inNum, outNum, fracBits) {
+  let circuit;
   generateCircomFile(n,inNum,outNum,fracBits);
   circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "attention.circom"));
 
@@ -33,7 +34,18 @@ async function attn(input, weight, bias,n,inNum, outNum, fracBits) {
       "weights_first_layer": weight,
       "bias_first_layer": bias,
   }
+
   const witness = await circuit.calculateWitness(INPUT, true);
+  var ret = [];
+  var idx = 1;
+  for(let i = 0;i <n;i++){
+    ret[i] = [];
+    for(let j = 0;j <n;j++){
+      ret[i][j] = (witness[idx++]);
+    }
+  }
+  console.log(getShape(ret));
+  return ret;
 }
 module.exports = {
   attn,

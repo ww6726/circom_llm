@@ -47,7 +47,7 @@ describe("main function for generating witness", function () {
         for (let i = 0; i < n; i++) {
             input[i] = [];
             for (let j = 0; j < inNum; j++) {
-                const number = 0.34242
+                const number = 0.34242;
                 input[i][j] = number;
             }
         }
@@ -55,7 +55,7 @@ describe("main function for generating witness", function () {
             weight[i] = [];
 
             for (let j = 0; j < outNum; j++) {
-                const number = -1.234236
+                const number = -0.234236;
                 weight[i][j] = number;
             }
         }
@@ -68,6 +68,7 @@ describe("main function for generating witness", function () {
         }
     
         var attention = attn(input, weight, bias,n,inNum, outNum,M);
+        console.log(attention);
      
     });
 });

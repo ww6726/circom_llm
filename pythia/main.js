@@ -28,6 +28,16 @@ function getShape(data) {
       return [];
     }
   }
+  function fieldToReal(input,fracBits){
+    const out = []
+    for (let i = 0; i < input.length; i++) {
+        out[i] = [];
+        for (let j = 0; j < input[0].length; j++) {
+            out[i][j] = parseFloat(Fr.toString(input[i][j])) / (2**(fracBits));
+        }
+    }
+    return out;
+  }
 describe("main function for building circuit", function () {
     this.timeout(100000000);
 
@@ -53,7 +63,7 @@ describe("main function for building circuit", function () {
             input_[i] = [];
 
             for (let j = 0; j < inNum; j++) {
-                const number = 0.34242
+                const number = 0.34242;
                 input[i][j] = floatToQ(N,M,number);
                 input_[i][j] = number;
             }
@@ -63,7 +73,7 @@ describe("main function for building circuit", function () {
             weight_[i] = [];
 
             for (let j = 0; j < outNum; j++) {
-                const number = -1.234236
+                const number = -0.234236;
                 weight[i][j] = floatToQ(N,M,number);
                 weight_[i][j] = number;
             }
@@ -79,7 +89,8 @@ describe("main function for building circuit", function () {
             }
         }
 
-        var attention = attn(input, weight, bias,n,inNum, outNum,M);
+        var attention = await attn(input, weight, bias,n,inNum, outNum,M);
+        console.log(fieldToReal(attention,M));
 
      
     });

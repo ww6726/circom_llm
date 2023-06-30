@@ -132,7 +132,14 @@ function floatToQ_signed(N, M,value) {
     return ret;
   }
   
-
+function floatToQ_matrix(N,M,matrix) {
+  for(let i=0;i<matrix.length;i++){
+    for(let j=0;j<matrix[0].length;j++){
+      matrix[i][j] = floatToQ(N,M,matrix[i][j]);
+    }
+  }
+  return matrix;
+}  
 function floatToQ(N,M,value) {
 
     return Math.floor(value * (2**M));
@@ -241,6 +248,7 @@ function test_conversion(){
 //===================for unit tests===========================
 module.exports = {
     floatToQ,
+    floatToQ_matrix,
     QToFloat,
     floatToQ_signed,  
     getShape,  

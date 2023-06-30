@@ -7,7 +7,7 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {floatToQ,getShape,QToFloat,floatToQ_signed} = require('../build/basic_components/util');
+const {floatToQ,getShape,QToFloat,floatToQ_signed} = require('../build_circuit/basic_components/util');
 const {add,sub,mul,div,sqrt} = require('../build_circuit/basic_components/arithmetics');
 const {linear} = require('../build_circuit/basic_components/linear');
 const {attn} = require('../build_circuit/llm_components/attention');
@@ -58,7 +58,7 @@ describe("test linear module", function () {
     it("test", async () => {
         // const circuit = await wasm_tester(path.join(__dirname, "circuits", "FixedPoint_test.circom"));
         const N = 4;
-        const M = 4;// this is number of bits to represent fractions
+        const M = 12;// this is number of bits to represent fractions
 
         const n = 2;
         const inNum = 2;

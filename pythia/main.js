@@ -7,11 +7,13 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {floatToQ,QToFloat,floatToQ_signed} = require('./build_circuit/basic_components/util');
+const {floatToQ,floatToQ_matrix} = require('./build_circuit/basic_components/util');
 const {add,sub,mul,div,sqrt} = require('./build_circuit/basic_components/arithmetics');
 const {linear} = require('./build_circuit/basic_components/linear');
 const {attn} = require('./build_circuit/llm_components/attention');
 
+const fs = require('fs');
+const { exit } = require("process");
 
 function getShape(data) {
     if (Array.isArray(data)) {
@@ -38,9 +40,17 @@ function getShape(data) {
     }
     return out;
   }
+  function readWitness(filename) {
+    const data = fs.readFileSync(filename, 'utf8');
+    const lines = data.trim().split('\n');
+    const matrix = lines.map(line => line.split(' ').map(Number));
+    return matrix;
+  }
+
 describe("main function for building circuit", function () {
     this.timeout(100000000);
-
+    
+    
     it("test", async () => {
         // const circuit = await wasm_tester(path.join(__dirname, "circuits", "FixedPoint_test.circom"));
         const N = 4;
@@ -49,6 +59,7 @@ describe("main function for building circuit", function () {
         const n = 32;
         const inNum = 32;
         const outNum = 96;
+        dim = 2;
 
         var input_ = [];
         var weight_ = [];
@@ -89,7 +100,15 @@ describe("main function for building circuit", function () {
             }
         }
 
-        var attention = await attn(input, weight, bias,n,inNum, outNum,M);
+        //step 2 - read witness
+        const ROPE_COS_FILE = "witness/ROPE_cos.txt";
+        const ropeCos = floatToQ_matrix(N,M,readWitness(ROPE_COS_FILE));
+        const ROPE_SIN_FILE = "witness/ROPE_sin.txt";
+        const ropeSin = floatToQ_matrix(N,M,readWitness(ROPE_SIN_FILE));
+        const MASK_FILE = "witness/mask.txt";
+        const mask = floatToQ_matrix(N,M,readWitness(MASK_FILE));
+
+        var attention = await attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim,M);
         console.log(fieldToReal(attention,M));
 
      

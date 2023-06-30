@@ -17,24 +17,33 @@ const fs = require('fs');
 
 
 
-function generateCircomFile(n, m,p,fracBits) {
+function generateCircomFile(n, m,p,dim,fracBits) {
   const content = `pragma circom 2.0.0;
 include "../../circuits/llm_components/attention.circom";
 
-component main = attention(${n},${m},${p},${fracBits});`;
+component main = attention(${n},${m},${p},${dim},${fracBits});`;
   fs.writeFileSync(path.join(__dirname, "../circom_runner", "attention.circom"), content);
 }
-async function attn(input, weight, bias,n,inNum, outNum, fracBits) {
+
+
+async function attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim, fracBits) {
+
+
+
   let circuit;
-  generateCircomFile(n,inNum,outNum,fracBits);
+  generateCircomFile(n,inNum,outNum,dim,fracBits);
   circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "attention.circom"));
 
   const INPUT = {
       "in_first_layer": input,
       "weights_first_layer": weight,
       "bias_first_layer": bias,
-  }
 
+      "rope_cos": ropeCos,
+      "rope_sin": ropeSin,
+      "mask": mask,
+
+  }
   const witness = await circuit.calculateWitness(INPUT, true);
   var ret = [];
   var idx = 1;
@@ -44,7 +53,6 @@ async function attn(input, weight, bias,n,inNum, outNum, fracBits) {
       ret[i][j] = (witness[idx++]);
     }
   }
-  console.log(getShape(ret));
   return ret;
 }
 module.exports = {

@@ -66,9 +66,8 @@ describe("main function for generating witness", function () {
                 bias[i][j] = number;
             }
         }
-    
-        var attention = attn(input, weight, bias,n,inNum, outNum,M);
-        console.log(attention);
-     
+        sequence_length = n;
+        var attention = attn(input, weight, bias,n,inNum, outNum,M,sequence_length);
+        
     });
 });

@@ -14,6 +14,7 @@ const {layerNorm} = require('../basic_components/layerNorm');
 const {softmax} = require('../basic_components/softmax');
 
 const fs = require('fs');
+const { exit } = require("process");
 
 function splitToHeads(qkv, headNum) {
   const heads = [];
@@ -87,8 +88,38 @@ function divideByConstant(matrix, constant){
   }
 
   return dividedMatrix;
+}
+function elementwiseMultiply(matrix1, matrix2) {
+  if (matrix1.length !== matrix2.length || matrix1[0].length !== matrix2[0].length) {
+    throw new Error("Matrices must have the same dimensions.");
   }
-  function rotateHalf(x) {
+
+  const result = [];
+  for (let i = 0; i < matrix1.length; i++) {
+    result.push([]);
+    for (let j = 0; j < matrix1[0].length; j++) {
+      result[i].push(matrix1[i][j] * matrix2[i][j]);
+    }
+  }
+
+  return result;
+}
+function elementwiseAdd(matrix1, matrix2) {
+  if (matrix1.length !== matrix2.length || matrix1[0].length !== matrix2[0].length) {
+    throw new Error("Matrices must have the same dimensions.");
+  }
+
+  const result = [];
+  for (let i = 0; i < matrix1.length; i++) {
+    result.push([]);
+    for (let j = 0; j < matrix1[0].length; j++) {
+      result[i].push(matrix1[i][j] + matrix2[i][j]);
+    }
+  }
+
+  return result;
+}
+function rotateHalf(x) {
     const halfIndex = Math.floor(x.length / 2);
     const x1 = x.slice(0, halfIndex);
     const x2 = x.slice(halfIndex);
@@ -98,46 +129,137 @@ function divideByConstant(matrix, constant){
 
     return rotated;
 }
-function applyRotaryPosEmb(q, k, cos, sin, positionIds) {
-  const gatherIndices = positionIds.map(row => row.map(value => [value])); // [bs, 1, seq_len, 1]
-  const gatherIndicesRepeated = gatherIndices.map(row => row.map(value => value.repeat(cos[0].length)));
+function applyRotaryPosEmb(q, k, cos, sin, positionIds,dim) {
+  let gather_indices = positionIds.map(element => [element]);
+  // console.log(getShape(gather_indices));
+  console.log((gather_indices));
 
-  const repeatedCos = cos.map(row => row.map(value => value.repeat(gatherIndices.length, 1)));
-  const repeatedSin = sin.map(row => row.map(value => value.repeat(gatherIndices.length, 1)));
+  gather_indices = gather_indices.map(row => Array(dim).fill(row[0]));
+  exit();
+  // console.log(getShape(cos));
+  // console.log(getShape(sin));
 
-  const qEmbed = q.map((qRow, i) => {
-      return qRow.map((qValue, j) => {
-          const qCos = qValue * repeatedCos[i][j];
-          const qSin = rotateHalf(qValue) * repeatedSin[i][j];
-          return qCos + qSin;
-      });
-  });
+  for(let i=0;i<cos.length;i++){
+    for(let j=0;j<cos[0].length;j++){
+      cos[i][j] = cos[gather_indices[i][j]][j]; 
+      sin[i][j] = sin[gather_indices[i][j]][j]; 
+    }
+  }
+  q_embed = elementwiseAdd(elementwiseMultiply(q,cos) , elementwiseMultiply(rotateHalf(q),sin));
+  k_embed = elementwiseAdd(elementwiseMultiply(k,cos) , elementwiseMultiply(rotateHalf(k),sin));
 
-  const kEmbed = k.map((kRow, i) => {
-      return kRow.map((kValue, j) => {
-          const kCos = kValue * repeatedCos[i][j];
-          const kSin = rotateHalf(kValue) * repeatedSin[i][j];
-          return kCos + kSin;
-      });
-  });
-
-  return [qEmbed, kEmbed];
+  return [q_embed,k_embed];
 }
-function attn(input, weight, bias,n,inNum, outNum, fracBits) {
+function concatenateMatrices(matrix1, matrix2) {
+  if (matrix1.length !== matrix2.length) {
+    throw new Error("The matrices must have the same number of rows.");
+  }
+  
+  const concatenatedMatrix = [];
+  
+  for (let i = 0; i < matrix1.length; i++) {
+    const concatenatedRow = matrix1[i].concat(matrix2[i]);
+    concatenatedMatrix.push(concatenatedRow);
+  }
+  
+  return concatenatedMatrix;
+}
+function Sin(data) {
+  return data.map(row => row.map(element => Math.sin(element)));
+}
+function Cos(data) {
+  return data.map(row => row.map(element => Math.cos(element)));
+}
+function computeROPE(dim, max_position_embedding){
+  const inv_freq = [];
+  var idx = 0;
+  for (let i = 0; i < dim; i += 2) {
+    inv_freq[idx++]=(1.0 / Math.pow(10000, i / dim));
+  }
+  let t = Array.from({ length: max_position_embedding }, (_, index) => index);
+  let t_mm = [];
+  t_mm[0] = t;
+  
+  let inv_freq_mm = [];
+  inv_freq_mm[0] = inv_freq;
+
+  t_mm = transposeMatrix(t_mm);
+  let freqs = matrixMultiplication(t_mm,inv_freq_mm);
+  let embs = concatenateMatrices(freqs,freqs);
+
+
+  const sin_matrix = Sin(embs);
+  const cos_matrix = Cos(embs);
+  return [sin_matrix,cos_matrix];
+
+
+}
+function createMask(n) {
+  const matrix = [];
+
+  for (let i = 0; i < n; i++) {
+    matrix.push([]);
+    for (let j = 0; j < n; j++) {
+      if (i >= j) {
+        matrix[i][j] = 0; // Bottom-left region (including diagonal) contains 0
+      } else {
+        matrix[i][j] = -999999; // Top-right region contains -Infinity
+      }
+    }
+  }
+
+  return matrix;
+}
+function saveWitnessToFile(witness, filename) {
+  const data = witness.map(row => row.join(' ')).join('\n');
+  fs.writeFileSync(filename, data);
+}
+function attn(input, weight, bias,n,inNum, outNum, fracBits,sequence_length) {
   const query_key_value = linear(input, weight, bias,n,inNum, outNum,fracBits);
   const headsAll = splitToHeads(query_key_value,8);
+  const dim = 2;
+
   for(let i = 0;i < 1;i++){
     const head = headsAll[i];
     const q_k_v =  splitQKV(head);
-    const query = q_k_v[0];
-    const key   = q_k_v[1];
-    const value = q_k_v[2];
-    const keyT = transposeMatrix(key);
-    const queryKT = matrixMultiplication(query,keyT);
-    return(divideByConstant(queryKT,8));
-    return queryKT;
+    var query = q_k_v[0];
+    var key   = q_k_v[1];
+    var value = q_k_v[2];
 
-    // const softMaxOut =  softmax(divideByConstant(queryKT,8));
+    const query_rot = query.map(row => row.slice(0, dim));
+    const query_pass = query.map(row => row.slice(dim));
+    const key_rot = key.map(row => row.slice(0, dim));
+    const key_pass = key.map(row => row.slice(dim));
+
+
+    //apply ROPE
+    const max_position_embedding = sequence_length;//32 for now
+    let position_ids = Array.from({ length: max_position_embedding }, (_, index) => index);
+    const[sin, cos] = computeROPE(dim,max_position_embedding);
+    //store witness for circuit
+    const witness_sin = 'witness/ROPE_sin.txt';
+    saveWitnessToFile(sin, witness_sin);
+    const witness_cos = 'witness/ROPE_cos.txt';
+    saveWitnessToFile(cos, witness_cos);
+
+    const[query_emb, key_emb] = applyRotaryPosEmb(query_rot,key_rot,cos,sin,position_ids,dim);
+    query = concatenateMatrices(query_emb,query_pass);
+    key = concatenateMatrices(key_emb,key_pass);
+
+    const keyT = transposeMatrix(key);
+    var queryKT = matrixMultiplication(query,keyT);
+    queryKT = divideByConstant(queryKT,8);
+
+    //ADD MASKing
+    let mask = createMask(queryKT.length);
+    const witness_mask = 'witness/mask.txt';
+    saveWitnessToFile(mask, witness_mask);
+    queryKT_masked = elementwiseAdd(queryKT,mask);
+    let softMaxOut = softmax(queryKT_masked);
+
+
+    let attn = matrixMultiplication(softMaxOut,value);    
+    return attn;
   }
 }
 module.exports = {

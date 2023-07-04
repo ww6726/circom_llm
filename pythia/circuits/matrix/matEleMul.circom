@@ -9,11 +9,6 @@ template matEleMul(m,n){
     component fixMul[m][n];
     for(var i=0;i<m;i++){
         for(var j=0;j<n;j++){
-
-            // fixMul[i][j] = fixPointMultSigned();
-            // fixMul[i][j].a <== a[i][j];
-            // fixMul[i][j].b <== b[i][j];
-            // out[i][j] <== fixMul[i][j].c;
             out[i][j] <== a[i][j] * b[i][j];
 
         }

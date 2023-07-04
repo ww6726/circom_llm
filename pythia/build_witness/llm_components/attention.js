@@ -124,6 +124,7 @@ function rotateHalf(x) {
     const x1 = x.slice(0, halfIndex);
     const x2 = x.slice(halfIndex);
 
+
     const negatedX2 = x2.map(subArray => subArray.map(value => -value));
     const rotated = negatedX2.concat(x1);
 
@@ -132,12 +133,10 @@ function rotateHalf(x) {
 function applyRotaryPosEmb(q, k, cos, sin, positionIds,dim) {
   let gather_indices = positionIds.map(element => [element]);
   // console.log(getShape(gather_indices));
-  console.log((gather_indices));
-
+  // console.log((gather_indices));
   gather_indices = gather_indices.map(row => Array(dim).fill(row[0]));
-  exit();
-  // console.log(getShape(cos));
-  // console.log(getShape(sin));
+  // console.log((gather_indices));
+
 
   for(let i=0;i<cos.length;i++){
     for(let j=0;j<cos[0].length;j++){
@@ -145,6 +144,12 @@ function applyRotaryPosEmb(q, k, cos, sin, positionIds,dim) {
       sin[i][j] = sin[gather_indices[i][j]][j]; 
     }
   }
+  //store witness for circuit
+  const witness_sin = 'witness/ROPE_sin.txt';
+  saveWitnessToFile(sin, witness_sin);
+  const witness_cos = 'witness/ROPE_cos.txt';
+  saveWitnessToFile(cos, witness_cos);
+  
   q_embed = elementwiseAdd(elementwiseMultiply(q,cos) , elementwiseMultiply(rotateHalf(q),sin));
   k_embed = elementwiseAdd(elementwiseMultiply(k,cos) , elementwiseMultiply(rotateHalf(k),sin));
 
@@ -216,17 +221,20 @@ function saveWitnessToFile(witness, filename) {
 }
 function attn(input, weight, bias,n,inNum, outNum, fracBits,sequence_length) {
   const query_key_value = linear(input, weight, bias,n,inNum, outNum,fracBits);
+
   const headsAll = splitToHeads(query_key_value,8);
   const dim = 2;
 
   for(let i = 0;i < 1;i++){
     const head = headsAll[i];
+
     const q_k_v =  splitQKV(head);
     var query = q_k_v[0];
     var key   = q_k_v[1];
     var value = q_k_v[2];
 
     const query_rot = query.map(row => row.slice(0, dim));
+
     const query_pass = query.map(row => row.slice(dim));
     const key_rot = key.map(row => row.slice(0, dim));
     const key_pass = key.map(row => row.slice(dim));
@@ -236,30 +244,32 @@ function attn(input, weight, bias,n,inNum, outNum, fracBits,sequence_length) {
     const max_position_embedding = sequence_length;//32 for now
     let position_ids = Array.from({ length: max_position_embedding }, (_, index) => index);
     const[sin, cos] = computeROPE(dim,max_position_embedding);
-    //store witness for circuit
-    const witness_sin = 'witness/ROPE_sin.txt';
-    saveWitnessToFile(sin, witness_sin);
-    const witness_cos = 'witness/ROPE_cos.txt';
-    saveWitnessToFile(cos, witness_cos);
+    // //store witness for circuit. NOTE: This part was moved 
+    // const witness_sin = 'witness/ROPE_sin.txt';
+    // saveWitnessToFile(sin, witness_sin);
+    // const witness_cos = 'witness/ROPE_cos.txt';
+    // saveWitnessToFile(cos, witness_cos);
 
     const[query_emb, key_emb] = applyRotaryPosEmb(query_rot,key_rot,cos,sin,position_ids,dim);
+    return key_emb;
+    
     query = concatenateMatrices(query_emb,query_pass);
     key = concatenateMatrices(key_emb,key_pass);
 
     const keyT = transposeMatrix(key);
     var queryKT = matrixMultiplication(query,keyT);
-    queryKT = divideByConstant(queryKT,8);
 
-    //ADD MASKing
-    let mask = createMask(queryKT.length);
-    const witness_mask = 'witness/mask.txt';
-    saveWitnessToFile(mask, witness_mask);
-    queryKT_masked = elementwiseAdd(queryKT,mask);
-    let softMaxOut = softmax(queryKT_masked);
+    // queryKT = divideByConstant(queryKT,8);
+
+    // //ADD MASKing
+    // let mask = createMask(queryKT.length);
+    // const witness_mask = 'witness/mask.txt';
+    // saveWitnessToFile(mask, witness_mask);
+    // queryKT_masked = elementwiseAdd(queryKT,mask);
+    // let softMaxOut = softmax(queryKT_masked);
 
 
-    let attn = matrixMultiplication(softMaxOut,value);    
-    return attn;
+    // let attn = matrixMultiplication(softMaxOut,value);   
   }
 }
 module.exports = {

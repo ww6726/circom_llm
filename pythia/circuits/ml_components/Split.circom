@@ -8,7 +8,7 @@ template Split(n,m,outputNum){
     signal input in[n][m];
     var mNew= m/outputNum;
     signal output out[outputNum][n][mNew];
-
+    
     for(var i =0;i<outputNum;i++){
         for(var j = 0;j<n;j++){
             for(var k =0;k<mNew;k++){

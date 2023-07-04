@@ -69,5 +69,6 @@ describe("main function for generating witness", function () {
         sequence_length = n;
         var attention = attn(input, weight, bias,n,inNum, outNum,M,sequence_length);
         
+        console.log((attention));
     });
 });

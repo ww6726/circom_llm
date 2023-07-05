@@ -16,7 +16,7 @@ template Concat(m,n,p){
     for(var i =0;i<m;i++){
         var idx = 0;
         for(var j = n;j<n+p;j++){
-            out[i][j] <== a[i][idx];
+            out[i][j] <== b[i][idx];
             idx++;
         }
     }

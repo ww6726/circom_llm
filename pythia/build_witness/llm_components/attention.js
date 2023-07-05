@@ -120,14 +120,19 @@ function elementwiseAdd(matrix1, matrix2) {
   return result;
 }
 function rotateHalf(x) {
-    const halfIndex = Math.floor(x.length / 2);
-    const x1 = x.slice(0, halfIndex);
-    const x2 = x.slice(halfIndex);
+    // const halfIndex = Math.floor(x.length / 2);
+    // const x1 = x.slice(0, halfIndex);
+    // const x2 = x.slice(halfIndex);
+
+    const halfIndex = Math.floor(x[0].length / 2);
+
+    const x1 = x.map(row => row.slice(0, halfIndex));
+    const x2 = x.map(row => row.slice(halfIndex));
 
 
     const negatedX2 = x2.map(subArray => subArray.map(value => -value));
-    const rotated = negatedX2.concat(x1);
-
+    const rotated = negatedX2.map((row, index) => row.concat(x1[index]));
+    // const rotated = negatedX2.concat(x1);
     return rotated;
 }
 function applyRotaryPosEmb(q, k, cos, sin, positionIds,dim) {
@@ -138,17 +143,23 @@ function applyRotaryPosEmb(q, k, cos, sin, positionIds,dim) {
   // console.log((gather_indices));
 
 
-  for(let i=0;i<cos.length;i++){
-    for(let j=0;j<cos[0].length;j++){
-      cos[i][j] = cos[gather_indices[i][j]][j]; 
-      sin[i][j] = sin[gather_indices[i][j]][j]; 
-    }
-  }
+  // for(let i=0;i<cos.length;i++){
+  //   for(let j=0;j<cos[0].length;j++){
+  //     cos[i][j] = cos[gather_indices[i][j]][j]; 
+  //     sin[i][j] = sin[gather_indices[i][j]][j]; 
+  //   }
+  // }
   //store witness for circuit
   const witness_sin = 'witness/ROPE_sin.txt';
   saveWitnessToFile(sin, witness_sin);
   const witness_cos = 'witness/ROPE_cos.txt';
   saveWitnessToFile(cos, witness_cos);
+  
+  // for(var i = 0; i <q.length; i++) {
+  //   for(var j = 0; j <q[0].length; j++){
+  //     console.log(q[i][j]);
+  //   }
+  // }
   
   q_embed = elementwiseAdd(elementwiseMultiply(q,cos) , elementwiseMultiply(rotateHalf(q),sin));
   k_embed = elementwiseAdd(elementwiseMultiply(k,cos) , elementwiseMultiply(rotateHalf(k),sin));
@@ -244,6 +255,7 @@ function attn(input, weight, bias,n,inNum, outNum, fracBits,sequence_length) {
     const max_position_embedding = sequence_length;//32 for now
     let position_ids = Array.from({ length: max_position_embedding }, (_, index) => index);
     const[sin, cos] = computeROPE(dim,max_position_embedding);
+
     // //store witness for circuit. NOTE: This part was moved 
     // const witness_sin = 'witness/ROPE_sin.txt';
     // saveWitnessToFile(sin, witness_sin);
@@ -251,8 +263,8 @@ function attn(input, weight, bias,n,inNum, outNum, fracBits,sequence_length) {
     // saveWitnessToFile(cos, witness_cos);
 
     const[query_emb, key_emb] = applyRotaryPosEmb(query_rot,key_rot,cos,sin,position_ids,dim);
-    return key_emb;
-    
+    return query_emb;
+
     query = concatenateMatrices(query_emb,query_pass);
     key = concatenateMatrices(key_emb,key_pass);
 

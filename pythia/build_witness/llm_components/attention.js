@@ -16,6 +16,10 @@ const {softmax} = require('../basic_components/softmax');
 const fs = require('fs');
 const { exit } = require("process");
 
+
+
+
+
 function splitToHeads(qkv, headNum) {
   const heads = [];
   const rows = qkv.length;
@@ -263,13 +267,13 @@ function attn(input, weight, bias,n,inNum, outNum, fracBits,sequence_length) {
     // saveWitnessToFile(cos, witness_cos);
 
     const[query_emb, key_emb] = applyRotaryPosEmb(query_rot,key_rot,cos,sin,position_ids,dim);
-    return query_emb;
 
     query = concatenateMatrices(query_emb,query_pass);
     key = concatenateMatrices(key_emb,key_pass);
 
     const keyT = transposeMatrix(key);
     var queryKT = matrixMultiplication(query,keyT);
+    return queryKT;
 
     // queryKT = divideByConstant(queryKT,8);
 

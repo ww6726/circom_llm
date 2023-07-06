@@ -10,7 +10,9 @@ const assert = chai.assert;
 const {floatToQ,QToFloat,floatToQ_signed} = require('./build_witness/basic_components/util');
 const {linear} = require('./build_witness/basic_components/linear');
 const {attn} = require('./build_witness/llm_components/attention');
-const {softmax} = require('./build_witness/basic_components/softmax');
+const {gelu,gelu_poly} = require('./build_witness/llm_components/mlp');
+
+const {softmax,softmax_,softmax_poly,softmax_poly_i} = require('./build_witness/basic_components/softmax');
 
 
 function getShape(data) {
@@ -67,8 +69,37 @@ describe("main function for generating witness", function () {
             }
         }
         sequence_length = n;
-        var attention = attn(input, weight, bias,n,inNum, outNum,M,sequence_length);
+        // var attention = attn(input, weight, bias,n,inNum, outNum,M,sequence_length);
+        // console.log((attention));
+
+        // const x = -0.898;
+        // console.log("input: ",x);
+
+        // console.log("Ramy's polynomial approximation: ");
+        // var gelu_out2 = gelu_poly(x);
+        // console.log(gelu_out2);
+
+
+        // Example usage
+        var x = [0.32,0.9,0.4354];
         
-        console.log((attention));
+        //this is actual softmax
+        var output = softmax_(x);
+        console.log(`Exact value: ${output}`);
+        console.log("====================================");
+
+        //test paper's softmax on real numbers
+        const approximation = softmax_poly(x);
+        console.log(`Approximation: ${approximation}`);
+        console.log("====================================");
+
+
+        //test paper's softmax using integers
+        for(var i =0;i<x.length;i++){
+            x[i] = floatToQ(N,M,x[i]);
+        }
+        const S = 1/16;
+        const approximation_i = softmax_poly_i(x,S);
+
     });
 });

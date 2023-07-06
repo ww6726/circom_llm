@@ -178,30 +178,38 @@ template attention(n,m,p,dim,fracbits){
         signal query_embed[n][dim] <== RoPE.q_embed_trunc;
         signal key_embed[n][dim] <== RoPE.k_embed_trunc;
         
-        signal output out[n][dim] <== key_embed;
     
 
-        // signal query_new[n][sizeQKV];
-        // signal key_new[n][sizeQKV];
-        // component concatQ = Concat(n,dim,sizeQKV-dim);
-        // concatQ.a <== query_embed;
-        // concatQ.b <== query_pass;
-        // query_new <== concatQ.out;
-        // component concatK = Concat(n,dim,sizeQKV-dim);
-        // concatK.a <== key_embed;
-        // concatK.b <== key_pass;
-        // key_new <== concatK.out;
+        signal query_new[n][sizeQKV];
+        signal key_new[n][sizeQKV];
+        component concatQ = Concat(n,dim,sizeQKV-dim);
+        concatQ.a <== query_embed;
+        concatQ.b <== query_pass;
+        query_new <== concatQ.out;
+        component concatK = Concat(n,dim,sizeQKV-dim);
+        concatK.a <== key_embed;
+        concatK.b <== key_pass;
+        key_new <== concatK.out;
 
-        // //compute key transpose
-        // component trans = Transpose(n,sizeQKV);
-        // trans.in <== key_new;
-        // signal keyT[sizeQKV][n] <== trans.out;
+        //compute key transpose
+        component trans = Transpose(n,sizeQKV);
+        trans.in <== key_new;
+        signal keyT[sizeQKV][n] <== trans.out;
 
-        // //compute Q*KT
-        // component mm_QKT = matmul(n,sizeQKV,n,fracbits);
-        // mm_QKT.a <== query_new;
-        // mm_QKT.b <== keyT;
-        // signal QKT[n][n] <== mm_QKT.c;
+        //compute Q*KT
+        component mm_QKT = matmul(n,sizeQKV,n,fracbits);
+        mm_QKT.a <== query_new;
+        mm_QKT.b <== keyT;
+        signal QKT[n][n] <== mm_QKT.c;
+        signal output out[n][n] <== QKT;
+
+        for(var i = 0;i <n;i++){
+            for(var j=0;j<n;j++){
+                log(out[i][j]);
+            }
+        }
+
+
 
     // }
     log("output is done");

@@ -49,7 +49,7 @@ async function attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim
   var idx = 1;
   for(let i = 0;i <n;i++){
     ret[i] = [];
-    for(let j = 0;j <2;j++){
+    for(let j = 0;j <n;j++){
       ret[i][j] = (witness[idx++]);
     }
   }

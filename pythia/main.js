@@ -54,7 +54,7 @@ describe("main function for building circuit", function () {
     it("test", async () => {
         // const circuit = await wasm_tester(path.join(__dirname, "circuits", "FixedPoint_test.circom"));
         const N = 4;
-        const M = 4;
+        const M = 16;
 
         const n = 32;
         const inNum = 32;

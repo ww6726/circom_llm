@@ -4,7 +4,7 @@ include "../circomlib/bitify.circom";
 include "../circomlib/comparators.circom";
 include "../circomlib/switcher.circom";
 
-template min(num,n){
+template max(num,n){
     signal input in[num];
     signal temp [num];
     temp[0] <== in[0];
@@ -12,8 +12,7 @@ template min(num,n){
     var com_idx = 0;
     var temp_idx = 0;
     for(var i =1;i < num;i++){
-        gt[com_idx] = LessThan(n);
-
+        gt[com_idx] = GreaterEqThan(n);
         var op_l = temp[temp_idx];
         var op_r = in[i];
         gt[com_idx].in[0] <== op_l;

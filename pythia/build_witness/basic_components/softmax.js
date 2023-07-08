@@ -35,6 +35,7 @@ function L(p){
   let c = 0.344;
   return a *((p + b)**2) + c;
 }
+
 function softmax(matrix) {
   const rows = matrix.length;
   const cols = matrix[0].length;
@@ -68,17 +69,14 @@ function sumVector(vector) {
   return sum;
 }
 function find_z_p(x_){
-  let z = Math.floor(-x_ / (Math.log(2)));
-  let p = x_ + z * (Math.log(2));
+  const ln2 = Math.log(2);
+  let z = Math.floor(-x_ / (ln2));
+  let p = x_ + z * (ln2);
+  console.log(-x_,z,p);
+  console.log(Math.exp(p),",",L(p));
+  console.log(Math.exp(x_));
 
-  // console.log((Math.exp(x_)));
-  // console.log((Math.exp(p))* Math.pow(2,-z));
 
-
-
-  // console.log((Math.exp(x_)));
-  // console.log((Math.exp(p))* Math.pow(2,-z));
-  // console.log((L(p))*Math.pow(2,-z));
   return [z,p];
 }
 
@@ -88,7 +86,9 @@ function I_EXP(z,p){
 function softmax_poly(q){
   let max = Math.max(...q);
   let q_ = subtractVector(q, max);
-
+  // for(var i =0;i<q.length;i++){
+  //   console.log(q_[i]);
+  // }
   let q_exp = [];
   for(var i =0;i < q_.length;i++){
     let result= find_z_p(q_[i]);
@@ -107,45 +107,70 @@ function softmax_poly(q){
 }
 
 
-
-function I_EXP2(q,S){
-  let a = 0.3585;
-  let b = 1.353;
-  let c = 0.344;
-
-  let q_ln2 = Math.floor(Math.log(2)/S);
-  let z = [];
-  for(var i  = 0;i<q.length;i++){
-    z[i] = Math.floor(-q[i]/q_ln2);
-  }
-
+//this entire function can easily be implemented in circom
+function L_int(p, fracBits){
+  let a = Math.floor(0.3585*Math.pow(2,2*fracBits));
+  let b = Math.floor(1.353*Math.pow(2,fracBits));
+  let c = Math.floor(0.344*Math.pow(2,4*fracBits));
+  return (a *((p + b)**2) + c);
 }
-function find_z_p_2(x_,S){
-  let z = Math.floor(-x_ / (Math.log(2)*16));
-  let p = x_ + z * (Math.log(2)*16);
+function find_z_p_2(x_,fracBits){
+  let S = 1/(Math.pow(2,fracBits));
+  let scale = 1/S;
+  let qln2 = Math.floor(Math.log(2)*scale);
+  let z = Math.floor(-x_ / qln2);
+  let p = x_ + z * qln2;
+  console.log(p,z);
 
-  console.log((Math.exp(x_)));
-  console.log((Math.exp(p))* Math.pow(2,-z));
-  console.log((L(p))*Math.pow(2,-z));
 
-  exit();
+  let p_l = L_int(p,fracBits);
+  let p_out = Math.floor(p_l / Math.pow(2,z));
+  scale = Math.pow(2,4*fracBits);
+
 
   // console.log((Math.exp(x_)));
   // console.log((Math.exp(p))* Math.pow(2,-z));
   // console.log((L(p))*Math.pow(2,-z));
-  return [z,p];
+  return [p_out,scale];
 }
-function softmax_poly_i(q,S){
+function softmax_poly_i(q,fracBits){
+
+
   let max = Math.max(...q);
   let q_ = subtractVector(q, max);
+
+  let p_exp = [];
+  let scale;
   for(var i =0;i < q_.length;i++){
-    let result= find_z_p_2(q_[i]);
-    let z = result[0];
-    let p = result[1];
-    q_exp[i] = I_EXP(z,p);
+    let result= find_z_p_2(q_[i],fracBits);
+    p_exp[i] = result[0];
+    scale = result[1];
   }
-  find_z_p_2(q,S);
-  return result;
+
+  let p_out = [];
+  let p_outi = [];
+  let p_sum = sumVector(p_exp);
+  for(var i =0;i < p_exp.length;i++){
+    p_out[i] = p_exp[i]/p_sum;
+    p_outi[i] = Math.floor(p_out[i]*2*scale);
+  }
+
+  //conpute fixpoint inverse
+  scale = 10*scale;
+  let p_sum_inv = Math.floor(scale / p_sum);//this is gonna be a witness
+
+  for(var i =0;i < p_exp.length;i++){
+    p_outi[i] = p_exp[i] * p_sum_inv;
+    p_out[i] = p_outi[i]/scale;
+  }
+  console.log(p_outi);
+  console.log(p_out);
+
+
+
+
+
+  return p_out;
 
 }
 module.exports = {

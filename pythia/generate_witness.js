@@ -81,7 +81,7 @@ describe("main function for generating witness", function () {
 
 
         // Example usage
-        var x = [0.32,0.9,0.4354];
+        var x = [0.32,0.9,3.4354,2.42];
         
         //this is actual softmax
         var output = softmax_(x);
@@ -89,8 +89,8 @@ describe("main function for generating witness", function () {
         console.log("====================================");
 
         //test paper's softmax on real numbers
-        const approximation = softmax_poly(x);
-        console.log(`Approximation: ${approximation}`);
+        const softmax_approx = softmax_poly(x);
+        console.log(`Approximation: ${softmax_approx}`);
         console.log("====================================");
 
 
@@ -98,8 +98,11 @@ describe("main function for generating witness", function () {
         for(var i =0;i<x.length;i++){
             x[i] = floatToQ(N,M,x[i]);
         }
-        const S = 1/16;
-        const approximation_i = softmax_poly_i(x,S);
+        let softmax_approx_i = softmax_poly_i(x,M);
+        for(var i =0;i<softmax_approx_i.length;i++){
+            softmax_approx_i[i] = floatToQ(N,M,softmax_approx_i[i]);
+        }
+        console.log(`Approximation_i: ${softmax_approx_i}`);
 
     });
 });

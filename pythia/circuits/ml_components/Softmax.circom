@@ -4,6 +4,7 @@ include "../circomlib/bitify.circom";
 include "../circomlib/comparators.circom";
 include "../circomlib/switcher.circom";
 include "../util/max.circom";
+include "../util/fixedPoint.circom";
 
 template find_z_p(fracBits){
     signal input x_;
@@ -13,6 +14,10 @@ template find_z_p(fracBits){
     var scale = fracBits<<2;
 
     signal z <== -x_ * qln2_inv;
+    var bitsTotal = 96;
+    component trunc = truncate(bitsTotal,bitsTotal-2*fracBits);
+    trunc.in <== z;
+    log(trunc.out);
     signal p <== x_ + z*qln2;
 
 

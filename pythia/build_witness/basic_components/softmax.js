@@ -120,8 +120,14 @@ function find_z_p_2(x_,fracBits){
   let qln2 = Math.floor(Math.log(2)*scale);
   let z = Math.floor(-x_ / qln2);
   let p = x_ + z * qln2;
-  console.log(p,z);
 
+  log(x_,qln2,z);
+  
+
+  let qln2_inv = Math.floor(1/Math.log(2)*scale);
+  let z2 = Math.floor(-x_ * qln2_inv / (scale*scale));
+  log(x_,qln2_inv,z2);
+  exit();
 
   let p_l = L_int(p,fracBits);
   let p_out = Math.floor(p_l / Math.pow(2,z));

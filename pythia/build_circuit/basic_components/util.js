@@ -131,7 +131,16 @@ function floatToQ_signed(N, M,value) {
     }
     return ret;
   }
-  
+  function floatToQ_multiD(N,M,arr) {
+    for (let i = 0; i < arr.length; i++) {
+      if (Array.isArray(arr[i])) {
+        arr[i] = floatToQ_multiD(N,M,arr[i]); // Recursive call for nested arrays
+      } else {
+        arr[i] = floatToQ(N,M,arr[i]); // Print the individual element
+      }
+    }
+    return arr;
+  }
 function floatToQ_matrix(N,M,matrix) {
   for(let i=0;i<matrix.length;i++){
     for(let j=0;j<matrix[0].length;j++){
@@ -249,6 +258,7 @@ function test_conversion(){
 module.exports = {
     floatToQ,
     floatToQ_matrix,
+    floatToQ_multiD,
     QToFloat,
     floatToQ_signed,  
     getShape,  

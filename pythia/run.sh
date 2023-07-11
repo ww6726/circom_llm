@@ -8,22 +8,20 @@ cd circuit_js
 #create an input file in circuit_js
 
 
-# json_content='{
+json_content='{
 
-#   "a": "4",
+  "a": "32",
+  "b": "4"
+}'
+
+# json_content='{
+#   "x": "1",
+#   "y": "1",
+#   "z": "3",
 #   "b": "3",
 #   "q": "1",
 #   "r": "1"
 # }'
-
-json_content='{
-  "x": "1",
-  "y": "1",
-  "z": "3",
-  "b": "3",
-  "q": "1",
-  "r": "1"
-}'
 echo "$json_content" > input.json
 
 # # auto-generate input for mm

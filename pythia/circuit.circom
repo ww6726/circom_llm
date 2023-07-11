@@ -106,18 +106,53 @@ template div_test2(){
 template div_test(){
     signal input a;
     signal input b;
-    signal input q;
-    signal input r;
-
-
-
+    
     signal output out;
-    component div = fixPointDiv();
-    div.a <== a;
-    div.b <== b;
-    div.q <== q;
-    div.r <== r;
-    out <== q;
+    out <-- a\b;
+    signal r <-- a % b;
+    a === b*out + r;
 
 }
- component main = div_test2();       
+function log_ceil(n) {
+   var n_temp = n;
+   for (var i = -1; i < 254; i++) {
+       if (n_temp == 0) {
+          return i;
+       }
+       n_temp = n_temp \ 2;
+   }
+   return 254;
+}
+   
+// function powOfTwo(n){
+    
+// }
+template shift_test(){//right shift a by b bits === a/(2^b)
+    signal input a;
+    signal input b;
+    
+
+    signal b_2pow2 <-- 2<<b;
+    var bitlen = 16;
+    component n2b = Num2Bits(bitlen);
+    n2b.in <== b_2pow2;
+    signal q_out[bitlen];
+    var idx = 0;
+    for(var i = 4;i<bitlen;i++){
+        q_out[idx] <-- n2b.out[i];
+        log(q_out[idx]);     
+        idx++;
+    }
+    component b2n = Bits2Num(bitlen);
+    b2n.in <== q_out;
+    signal q <== b2n.out;
+
+
+    // signal output out <-- a \ b_2pow;
+    // signal r <-- a % b_2pow;
+    // a === out * b_2pow + r;
+
+    signal output out <== 2;
+    
+}
+ component main = shift_test();       

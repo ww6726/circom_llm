@@ -12,6 +12,26 @@ const {getShape,truncate} = require('../basic_components/util');
 const fs = require('fs');
 const { exit } = require("process");
 
+function saveWitnessToFile1D(witness, filename) {
+   // Convert the vector to a string
+   const vectorString = witness.join(' ');
+
+   // Write the vector string to the file
+   fs.writeFile(filename, vectorString, (err) => {
+     if (err) {
+       console.error('Error writing file:', err);
+       return;
+     }
+     console.log('Vector written to file successfully!');
+   });
+}
+
+function saveWitnessToFile2D(witness, filename) {
+  log(witness);
+  const data = witness.map(row => row.join(' ')).join('\n');
+  fs.writeFileSync(filename, data);
+}
+
 function softmax_(arr) {
   var softmaxArr = [];
   var sum = 0;
@@ -121,37 +141,44 @@ function find_z_p_2(x_,fracBits){
   let z = Math.floor(-x_ / qln2);
   let p = x_ + z * qln2;
 
-  log(x_,qln2,z);
   
-
   let qln2_inv = Math.floor(1/Math.log(2)*scale);
-  let z2 = Math.floor(-x_ * qln2_inv / (scale*scale));
-  log(x_,qln2_inv,z2);
-  exit();
+  // let z2 = Math.floor(-x_ * qln2_inv / (scale*scale));
 
   let p_l = L_int(p,fracBits);
-  let p_out = Math.floor(p_l / Math.pow(2,z));
+  let p_out = Math.floor(p_l / Math.pow(2,z));//quotient
+  let p_out_remainder = p_l % Math.pow(2,z);//remainder
+
+  log(p_l,",",z,",",p_out,",",p_out_remainder);
   scale = Math.pow(2,4*fracBits);
 
 
   // console.log((Math.exp(x_)));
   // console.log((Math.exp(p))* Math.pow(2,-z));
   // console.log((L(p))*Math.pow(2,-z));
-  return [p_out,scale];
+  return [p_out,scale,p_out_remainder];// p_out is output and witness we need
 }
 function softmax_poly_i(q,fracBits){
-
 
   let max = Math.max(...q);
   let q_ = subtractVector(q, max);
 
-  let p_exp = [];
+  let p_exp = [];//witness
+  let z_all = [];
+  let p_exp_remainder = [];//witness
   let scale;
   for(var i =0;i < q_.length;i++){
     let result= find_z_p_2(q_[i],fracBits);
     p_exp[i] = result[0];
     scale = result[1];
+    p_exp_remainder[i] = result[2];
   }
+  //save p_exp and q_exp_remainder as division result
+  const witness_softmax_p_exp = 'witness/p_exp.txt';
+  saveWitnessToFile1D(p_exp, witness_softmax_p_exp);
+  const witness_softmax_p_exp_remainder = 'witness/p_exp_remainder.txt';
+  saveWitnessToFile1D(p_exp_remainder, witness_softmax_p_exp_remainder);
+
 
   let p_out = [];
   let p_outi = [];

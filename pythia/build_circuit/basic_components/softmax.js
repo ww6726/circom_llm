@@ -8,7 +8,7 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {floatToQ,getShape} = require('../basic_components/util');
+const {floatToQ,getShape,floatToQ_matrix,floatToQ_multiD} = require('../basic_components/util');
 const fs = require('fs');
 
 function generateCircomFile(n,fracBits) {
@@ -18,6 +18,27 @@ function generateCircomFile(n,fracBits) {
   component main = Softmax(${n},${fracBits});`;
     fs.writeFileSync(path.join(__dirname, "../circom_runner", "softmax.circom"), content);
 }
+function readWitness(filename) {
+    const data = fs.readFileSync(filename, 'utf8');
+    const lines = data.trim().split('\n');
+    const matrix = lines.map(line => line.split(' ').map(Number));
+    return matrix;
+}
+function readTxtFileIntoMultiDimArray(filename) {
+  const fileContent = fs.readFileSync(filename, 'utf-8');
+  const lines = fileContent.split('\n');
+  
+  const multiDimArray = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line !== '') {
+      const elements = line.split(' ');
+      multiDimArray.push(elements);
+    }
+  }
+  return multiDimArray;
+}
+
 async function softmax(input,fracBits) {
     let n = input.length;
 
@@ -28,10 +49,26 @@ async function softmax(input,fracBits) {
     let qln2 = floatToQ(4,fracBits,Math.log(2));
     let qln2_inv = floatToQ(4,fracBits,1/Math.log(2));
     let a = floatToQ(4,2*fracBits,0.3585);
-    const INPUT = {
+    let b = floatToQ(4,fracBits,1.353);
+    let c = floatToQ(4,4*fracBits,0.344);
+
+    let p_exp_File = "witness/p_exp.txt";
+    let p_exp = (readTxtFileIntoMultiDimArray(p_exp_File));
+    
+    let p_exp_remainder_File = "witness/p_exp_remainder.txt";
+    let p_exp_remainder = (readTxtFileIntoMultiDimArray(p_exp_remainder_File));
+   
+
+   const INPUT = {
         "in": input,
         "qln2":qln2,
         "qln2_inv": qln2_inv,
+        "a": a,
+        "b": b,
+        "c": c,
+        "p_exp": p_exp[0],
+        "p_exp_remainder": p_exp_remainder[0],
+
     }
     const witness = await circuit.calculateWitness(INPUT, true);
     let output = [];

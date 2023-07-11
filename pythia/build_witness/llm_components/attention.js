@@ -249,7 +249,6 @@ function attn(input, weight, bias,n,inNum, outNum, fracBits,sequence_length) {
     var value = q_k_v[2];
 
     const query_rot = query.map(row => row.slice(0, dim));
-
     const query_pass = query.map(row => row.slice(dim));
     const key_rot = key.map(row => row.slice(0, dim));
     const key_pass = key.map(row => row.slice(dim));

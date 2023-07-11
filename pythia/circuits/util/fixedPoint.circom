@@ -6,11 +6,34 @@ include "../circomlib/switcher.circom";
 
 include "isPositive.circom";
 /**
- * Calculates the fixpoint product of two fix point number represented by 8 bits each.
- *
- * @param n The number of bits to represent each operand.
- * @return The product.
+    This code has circom implementation of some of the basic fixpoint operation 
+    such as multiplication, truncation, abs, div etc.
  */
+template rightShift(bits_total,bits_want){
+    signal input in;
+
+
+    component n2b = Num2Bits(bits_total);//result has twice the bit. we need twice the bits to represent
+    n2b.in <== in;
+
+    var afterTruncate[bits_want];
+    var idx = bits_want-1;
+    for(var i = bits_total-1; i>=bits_total - bits_want;i--){
+        afterTruncate[idx] = n2b.out[i];
+        idx--;
+    }
+    component b2n = Bits2Num(bits_want);
+    for(var i =0;i<bits_want;i++){
+        b2n.in[i] <== afterTruncate[i];
+    }
+    
+    // var abs_bit = 2*sign -1;
+    // out <-- in_abs>>4*abs_bit;
+
+    signal output out;
+    out <== b2n.out;
+
+}
 template fixPointMultOld(n){
     signal input a;
     signal input b;
@@ -52,8 +75,6 @@ template truncate(bits_total, bits_want){
 
     signal input in;
     signal output out;
-
-
     component abs = absoluteValue();
     abs.in <== in;
     signal in_abs <== abs.out[0];

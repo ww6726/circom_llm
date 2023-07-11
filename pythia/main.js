@@ -7,7 +7,7 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {floatToQ,floatToQ_matrix} = require('./build_circuit/basic_components/util');
+const {floatToQ,floatToQ_matrix,floatToQ_multiD} = require('./build_circuit/basic_components/util');
 const {add,sub,mul,div,sqrt} = require('./build_circuit/basic_components/arithmetics');
 const {linear} = require('./build_circuit/basic_components/linear');
 const {attn} = require('./build_circuit/llm_components/attention');
@@ -109,7 +109,7 @@ describe("main function for building circuit", function () {
         const mask = floatToQ_matrix(N,M,readWitness(MASK_FILE));
 
         var attention = await attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim,M);
-        console.log(fieldToReal(attention,M));
+        // console.log(fieldToReal(attention,M));
 
      
     });

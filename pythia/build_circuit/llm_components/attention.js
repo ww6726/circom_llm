@@ -28,8 +28,6 @@ component main = attention(${n},${m},${p},${dim},${fracBits});`;
 
 async function attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim, fracBits) {
 
-
-
   let circuit;
   generateCircomFile(n,inNum,outNum,dim,fracBits);
   circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "attention.circom"));

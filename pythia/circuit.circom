@@ -4,6 +4,7 @@ include "circuits/matrix/matmul.circom";
 include "circuits/ml_components/ReLU.circom";
 include "circuits/ml_components/Linear.circom";
 include "circuits/util/fixedPoint.circom";
+include "circuits/circomlib/comparators.circom";
 
 
 // template mm() {
@@ -124,35 +125,15 @@ function log_ceil(n) {
    return 254;
 }
    
-// function powOfTwo(n){
-    
-// }
-template shift_test(){//right shift a by b bits === a/(2^b)
+
+template shift_test(){ //right shift a by b bits === a/(2^b)
     signal input a;
     signal input b;
     
-
-    signal b_2pow2 <-- 2<<b;
-    var bitlen = 16;
-    component n2b = Num2Bits(bitlen);
-    n2b.in <== b_2pow2;
-    signal q_out[bitlen];
-    var idx = 0;
-    for(var i = 4;i<bitlen;i++){
-        q_out[idx] <-- n2b.out[i];
-        log(q_out[idx]);     
-        idx++;
-    }
-    component b2n = Bits2Num(bitlen);
-    b2n.in <== q_out;
-    signal q <== b2n.out;
-
-
-    // signal output out <-- a \ b_2pow;
-    // signal r <-- a % b_2pow;
-    // a === out * b_2pow + r;
-
-    signal output out <== 2;
-    
+    var n = 32;
+    component rs = rightShift(n);
+    rs.in <== a;
+    rs.bitsToShift <== b;
+    signal output out <== rs.out;
 }
  component main = shift_test();       

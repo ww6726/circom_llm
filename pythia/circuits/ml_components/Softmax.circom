@@ -7,9 +7,9 @@ include "../util/max.circom";
 include "../util/fixedPoint.circom";
 template L_int(fracBits){
     signal input p;
-    signal input a;
-    signal input b;
-    signal input c;
+    signal a <== 91;//hardcoded 4-bits quantization
+    signal b <== 21;
+    signal c <== 22544;
 
     signal med1 <== (p+b)*(p+b);
     signal med2 <== a*med1;
@@ -20,14 +20,6 @@ template L_int(fracBits){
 template find_z_p(fracBits){
     signal input x_;
     signal input qln2;
-    signal input qln2_inv;
-
-    signal input a;
-    signal input b;
-    signal input c;
-    signal input p_out;
-    signal input p_out_remainder;
-
 
     var scale = fracBits<<2;
     signal z <-- -x_ \ qln2;//quotient
@@ -38,35 +30,39 @@ template find_z_p(fracBits){
    
     component Lint = L_int(fracBits);
     Lint.p <== p;
-    Lint.a <== a;
-    Lint.b <== b;
-    Lint.c <== c;
-    signal p_l <== Lint.out;  
-    signal z_2pow <-- 2**z;
-    signal p_out2 <-- p_l \ z_2pow;
-    signal p_out2_r <-- p_l % z_2pow;
-    p_l === p_out2*z_2pow +p_out2_r; 
-    p_l === p_out2 * (z_2pow);
 
-    log(p_out2);
+    signal p_l <== Lint.out;  
+    
+    //compute p_l >> z
+    var bitsRange = 32;
+    component rs = rightShift(bitsRange);
+    rs.in <== p_l;
+    rs.bitsToShift <== z;
+    signal p_out <== rs.out;
+
 
 
     //put together output
-    signal output out[2];
-    out[0] <== 1;//z
-    out[1] <== 2;//p
+    signal output out <== p_out;
+    // out[0] <== 1;//z
+    // out[1] <== p_out;//p
 
 }
+/*
+
+ The implementation is based on method in paper
+ "I-BERT: Integer-only BERT Quantization"
+
+ */
 template Softmax(n, fracBits){
+    component po2 = powOfTwo(32);
+    po2.in <== fracBits;
+    signal scale <== po2.out;// we can modify this part to ensure non-zero integer softmax value
+
     signal input in[n];
     //additional witness
     signal input qln2;
-    signal input qln2_inv;
-    signal input a;
-    signal input b;
-    signal input c;
-    signal input p_exp[n];
-    signal input p_exp_remainder[n];
+
 
     component findMax = max(n, 32);
     findMax.in <== in;
@@ -77,25 +73,31 @@ template Softmax(n, fracBits){
         q[i] <== in[i] - max_val;
     } 
 
-    component zp = find_z_p(fracBits);
-    zp.x_ <== q[0];
-    zp.qln2 <== qln2;
-    zp.qln2_inv <== qln2_inv;
-    zp.a <== a;
-    zp.b <== b;
-    zp.c <== c;
-    zp.p_out <== p_exp[0];
-    zp.p_out_remainder <== p_exp_remainder[0];
+    component zp[n];
+    signal q_exp[n];
+    for(var i = 0;i<n;i++){
+        zp[i] = find_z_p(fracBits);
+        zp[i].x_ <== q[i];
+        zp[i].qln2 <== qln2;
+        q_exp[i] <== zp[i].out;
+    }
+    component findSum = Sum(n);
+    findSum.in <== q_exp;
+    signal sum <== findSum.out;
 
-
-
-
-
-
-
-
+    
+    signal q_temp[n];
+    signal r[n];//remainder
     signal output out[n];
-    for(var i =0;i<n;i++){
-        out[i] <== 2;
-    } 
+    for(var i = 0;i<n;i++){
+        q_temp[i] <== q_exp[i]*scale;
+        out[i] <-- q_temp[i] \ sum;
+        r[i] <-- q_temp[i] % sum;
+        q_temp[i] === out[i] * sum + r[i];
+    }
+
+    
+    // for(var i = 0;i<n;i++){
+    //   log(out[i]);
+    // }
 }

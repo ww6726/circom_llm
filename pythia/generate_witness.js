@@ -81,7 +81,7 @@ describe("main function for generating witness", function () {
 
 
         // Example usage
-        var x = [0.32,0.9,3.4354,2.42];
+        var x = [0.32,0.39,0.45,0.42];
         
         //this is actual softmax
         var output = softmax_(x);

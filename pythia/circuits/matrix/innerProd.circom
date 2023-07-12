@@ -9,7 +9,6 @@ template innerProd(n){
         sum += a[i]*b[i]; 
     }
     out <-- sum;
-    log(out);
     signal dummy;
     dummy <== a[0]*b[0];
 

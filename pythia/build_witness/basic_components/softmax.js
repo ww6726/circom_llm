@@ -92,7 +92,7 @@ function find_z_p(x_){
   const ln2 = Math.log(2);
   let z = Math.floor(-x_ / (ln2));
   let p = x_ + z * (ln2);
-  console.log(-x_,z,p);
+  console.log(-x_,",",z,",",p, ",", Math.exp(-x_),",",2**z);
   console.log(Math.exp(p),",",L(p));
   console.log(Math.exp(x_));
 
@@ -132,6 +132,7 @@ function L_int(p, fracBits){
   let a = Math.floor(0.3585*Math.pow(2,2*fracBits));
   let b = Math.floor(1.353*Math.pow(2,fracBits));
   let c = Math.floor(0.344*Math.pow(2,4*fracBits));
+  log("abc: ", a,", ",b,", ",c);
   return (a *((p + b)**2) + c);
 }
 function find_z_p_2(x_,fracBits){
@@ -146,7 +147,7 @@ function find_z_p_2(x_,fracBits){
   // let z2 = Math.floor(-x_ * qln2_inv / (scale*scale));
 
   let p_l = L_int(p,fracBits);
-  let p_out = Math.floor(p_l / Math.pow(2,z));//quotient
+  let p_out = Math.floor(p_l / Math.pow(2,z));//quotient, and right shift
   let p_out_remainder = p_l % Math.pow(2,z);//remainder
 
   log(p_l,",",z,",",p_out,",",p_out_remainder);
@@ -174,10 +175,10 @@ function softmax_poly_i(q,fracBits){
     p_exp_remainder[i] = result[2];
   }
   //save p_exp and q_exp_remainder as division result
-  const witness_softmax_p_exp = 'witness/p_exp.txt';
-  saveWitnessToFile1D(p_exp, witness_softmax_p_exp);
-  const witness_softmax_p_exp_remainder = 'witness/p_exp_remainder.txt';
-  saveWitnessToFile1D(p_exp_remainder, witness_softmax_p_exp_remainder);
+  // const witness_softmax_p_exp = 'witness/p_exp.txt';
+  // saveWitnessToFile1D(p_exp, witness_softmax_p_exp);
+  // const witness_softmax_p_exp_remainder = 'witness/p_exp_remainder.txt';
+  // saveWitnessToFile1D(p_exp_remainder, witness_softmax_p_exp_remainder);
 
 
   let p_out = [];
@@ -198,9 +199,6 @@ function softmax_poly_i(q,fracBits){
   }
   console.log(p_outi);
   console.log(p_out);
-
-
-
 
 
   return p_out;

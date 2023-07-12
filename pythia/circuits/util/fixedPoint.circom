@@ -7,33 +7,9 @@ include "../circomlib/switcher.circom";
 include "isPositive.circom";
 /**
     This code has circom implementation of some of the basic fixpoint operation 
-    such as multiplication, truncation, abs, div etc.
+    such as multiplication, truncation, abs, power of 2, shifting.
  */
-template rightShift(bits_total,bits_want){
-    signal input in;
 
-
-    component n2b = Num2Bits(bits_total);//result has twice the bit. we need twice the bits to represent
-    n2b.in <== in;
-
-    var afterTruncate[bits_want];
-    var idx = bits_want-1;
-    for(var i = bits_total-1; i>=bits_total - bits_want;i--){
-        afterTruncate[idx] = n2b.out[i];
-        idx--;
-    }
-    component b2n = Bits2Num(bits_want);
-    for(var i =0;i<bits_want;i++){
-        b2n.in[i] <== afterTruncate[i];
-    }
-    
-    // var abs_bit = 2*sign -1;
-    // out <-- in_abs>>4*abs_bit;
-
-    signal output out;
-    out <== b2n.out;
-
-}
 template fixPointMultOld(n){
     signal input a;
     signal input b;
@@ -234,7 +210,7 @@ template fixPointDivSigned(n,m){
     //waiting for output
 
 }
-template fixPointedSum(n){
+template Sum(n){
     signal input in[n];
     signal output out;
     var sum = 0;
@@ -277,4 +253,45 @@ template sqrt(){
     signal input root;
 
     in === root*root;
+}
+
+template powOfTwo(n){
+    signal input in;
+    signal bitRange[n];
+    component eq[n];
+    for(var i =0;i<n;i++){
+        eq[i] = IsEqual();
+        eq[i].in[0] <== i;
+        eq[i].in[1] <== in;
+        bitRange[i] <== eq[i].out;
+    }
+    
+    component b2n = Bits2Num(n);
+    b2n.in <== bitRange;
+    signal out_ <== b2n.out;
+    component isZeroA = IsZero();
+    component isZeroB = IsZero();
+    isZeroA.in <== in;
+    isZeroB.in <== out_;
+
+    signal output out <== isZeroB.out * (1- isZeroA.out)*999999 + out_;// if bits is too big, just replace it with 999999
+}
+
+template rightShift(n){//n - the max number of bit in the range to support. It is not the number of bits we want to shift
+    signal input in;
+    signal input bitsToShift;
+    
+    //check if bitsToShift is too many
+    component leq = LessEqThan(64);
+    leq.in[0] <== bitsToShift;
+    leq.in[1] <== n;
+
+    component pot = powOfTwo(n);
+    pot.in <== bitsToShift;
+    signal twoPowBitsToShift <== pot.out;
+
+    signal output out <-- in \ twoPowBitsToShift;
+    signal r <-- in % twoPowBitsToShift;
+    in === out*twoPowBitsToShift + r;
+
 }

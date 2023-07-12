@@ -47,10 +47,9 @@ async function softmax(input,fracBits) {
     circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "softmax.circom"));
 
     let qln2 = floatToQ(4,fracBits,Math.log(2));
-    let qln2_inv = floatToQ(4,fracBits,1/Math.log(2));
-    let a = floatToQ(4,2*fracBits,0.3585);
-    let b = floatToQ(4,fracBits,1.353);
-    let c = floatToQ(4,4*fracBits,0.344);
+    // let a = floatToQ(4,2*fracBits,0.3585);
+    // let b = floatToQ(4,fracBits,1.353);
+    // let c = floatToQ(4,4*fracBits,0.344);
 
     let p_exp_File = "witness/p_exp.txt";
     let p_exp = (readTxtFileIntoMultiDimArray(p_exp_File));
@@ -62,12 +61,7 @@ async function softmax(input,fracBits) {
    const INPUT = {
         "in": input,
         "qln2":qln2,
-        "qln2_inv": qln2_inv,
-        "a": a,
-        "b": b,
-        "c": c,
-        "p_exp": p_exp[0],
-        "p_exp_remainder": p_exp_remainder[0],
+      
 
     }
     const witness = await circuit.calculateWitness(INPUT, true);

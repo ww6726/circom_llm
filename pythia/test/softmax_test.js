@@ -12,7 +12,7 @@ describe("vector softmax test", function () {
     this.timeout(100000000);
 
     it("check compare softmax results between actual and circom", async () => {
-        var x_ = [0.32,0.9,3.4354,2.42];
+        var x_ = [0.32,0.39,0.45,0.42];
         var x = [];
         const fracBits = 4;
         const num = 4;

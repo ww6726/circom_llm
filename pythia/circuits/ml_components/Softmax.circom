@@ -52,7 +52,6 @@ template find_z_p(fracBits){
 
  The implementation is based on method in paper
  "I-BERT: Integer-only BERT Quantization"
-
  */
 template Softmax(n, fracBits){
     component po2 = powOfTwo(32);
@@ -96,7 +95,7 @@ template Softmax(n, fracBits){
         q_temp[i] === out[i] * sum + r[i];
     }
 
-    
+
     // for(var i = 0;i<n;i++){
     //   log(out[i]);
     // }

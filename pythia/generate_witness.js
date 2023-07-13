@@ -10,7 +10,7 @@ const assert = chai.assert;
 const {floatToQ,QToFloat,floatToQ_signed} = require('./build_witness/basic_components/util');
 const {linear} = require('./build_witness/basic_components/linear');
 const {attn} = require('./build_witness/llm_components/attention');
-const {gelu,gelu_poly} = require('./build_witness/llm_components/mlp');
+const {gelu,gelu_poly} = require('./build_witness/llm_components/gelu');
 
 const {softmax,softmax_,softmax_poly,softmax_poly_i} = require('./build_witness/basic_components/softmax');
 

@@ -203,11 +203,7 @@ template attention(n,m,p,dim,fracbits){
         signal QKT[n][n] <== mm_QKT.c;
         signal output out[n][n] <== QKT;
 
-        for(var i = 0;i <n;i++){
-            for(var j=0;j<n;j++){
-                log(out[i][j]);
-            }
-        }
+        //elementwise divide by 8
 
 
 

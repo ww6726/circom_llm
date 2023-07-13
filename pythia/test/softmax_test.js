@@ -1,4 +1,5 @@
 const chai = require("chai");
+const { log } = require("console");
 const path = require("path");
 const F1Field = require("ffjavascript").F1Field;
 const Scalar = require("ffjavascript").Scalar;

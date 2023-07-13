@@ -199,8 +199,6 @@ function softmax_poly_i(q,fracBits){
   }
   console.log(p_outi);
   console.log(p_out);
-
-
   return p_out;
 
 }

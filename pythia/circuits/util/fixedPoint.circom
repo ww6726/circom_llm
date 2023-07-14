@@ -3,6 +3,8 @@ include "../circomlib/sign.circom";
 include "../circomlib/bitify.circom";
 include "../circomlib/comparators.circom";
 include "../circomlib/switcher.circom";
+include "../util/max.circom";
+include "../util/min.circom";
 
 include "isPositive.circom";
 /**
@@ -10,29 +12,30 @@ include "isPositive.circom";
     such as multiplication, truncation, abs, power of 2, shifting.
  */
 
-template fixPointMultOld(n){
-    signal input a;
-    signal input b;
-    signal temp;
-    signal output out;
-    temp <== a*b;
+// //deprecated
+// template fixPointMultOld(n){
+//     signal input a;
+//     signal input b;
+//     signal temp;
+//     signal output out;
+//     temp <== a*b;
     
-    component n2b = Num2Bits(n*2);//result has twice the bit. we need twice the bits to represent
-    component b2n = Bits2Num(n);// we cut out the left and right and only kept the middle.
+//     component n2b = Num2Bits(n*2);//result has twice the bit. we need twice the bits to represent
+//     component b2n = Bits2Num(n);// we cut out the left and right and only kept the middle.
 
-    n2b.in <== temp;
-    var aTimesB_after_truncate[n];
-    var idx = 0;
-    for(var i = n/2;i<n+n/2;i++){
-        aTimesB_after_truncate[idx] = n2b.out[i];
-        idx++;
-    }
-    for(var i =0;i<n;i++){
-        b2n.in[i] <== aTimesB_after_truncate[i];
-    }
-    out <== b2n.out;
+//     n2b.in <== temp;
+//     var aTimesB_after_truncate[n];
+//     var idx = 0;
+//     for(var i = n/2;i<n+n/2;i++){
+//         aTimesB_after_truncate[idx] = n2b.out[i];
+//         idx++;
+//     }
+//     for(var i =0;i<n;i++){
+//         b2n.in[i] <== aTimesB_after_truncate[i];
+//     }
+//     out <== b2n.out;
      
-}
+// }
 
 template absoluteValue(){
     signal input in;
@@ -248,12 +251,7 @@ template fixPointDiv(){
     a === q*b + r;
 }
 
-template sqrt(){
-    signal input in;
-    signal input root;
 
-    in === root*root;
-}
 
 template powOfTwo(n){
     signal input in;
@@ -294,4 +292,73 @@ template rightShift(n){//n - the max number of bit in the range to support. It i
     signal r <-- in % twoPowBitsToShift;
     in === out*twoPowBitsToShift + r;
 
+}
+
+template findMSB(n){
+    signal input in;
+    component n2b = Num2Bits(n);
+    n2b.in <== in;
+    signal in_bin[n] <== n2b.out;
+    signal indicesTimeVal[n];
+    for(var i =0;i<n;i++){
+        indicesTimeVal[i] <== in_bin[i]*i;
+    }
+    component findMax = max(n,32);
+    findMax.in <==indicesTimeVal;
+    signal output out <== findMax.out;
+}
+template ceil(){//if remainder == 0, then no need to add one. Otherwise, add one
+    signal input in;
+    signal input remainder;
+    component eqZero = IsZero();
+    eqZero.in <== remainder;
+    
+    signal output out <== 1 + in - eqZero.out;
+
+}
+template squareRoot(){
+    signal input in;
+    var size = 32;
+
+    //find Bits(n)/2
+    component msb = findMSB(64);
+    msb.in <== in;
+    signal numBits <== msb.out + 1;
+    signal pow_temp <-- numBits \2;
+    signal r <-- numBits % 2;
+    numBits === pow_temp*2 + r;
+    component findCeil = ceil();
+    findCeil.in <== pow_temp;
+    findCeil.remainder <== r;
+    signal pow <== findCeil.out;
+
+    //start computing x_0 and so on
+    component pow2 = powOfTwo(32);
+    pow2.in <== pow;
+    signal x[size];
+    x[0] <== pow2.out;
+    var i = 0;
+    signal temp1[size];
+    signal r1[size];
+    signal temp2[size];
+    signal r2[size];
+
+    while(i < 11){
+        temp1[i] <-- in \ x[i];
+        r1[i] <-- in % x[i];
+        in === x[i]*temp1[i] + r1[i];
+        temp2[i] <== x[i] + temp1[i];
+
+        x[i+1] <-- temp2[i] \ 2;
+        r2[i] <-- temp2[i] % 2;
+        temp2[i] === 2*x[i+1] + r2[i];
+        i++;
+        
+    }
+    signal out2[2];
+    out2[0] <== x[i];
+    out2[1] <== x[i-1];
+    component findMax = min(2,32);
+    findMax.in <== out2;
+    signal output out <== findMax.out;
 }

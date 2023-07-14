@@ -4,8 +4,15 @@ include "circuits/matrix/matmul.circom";
 include "circuits/ml_components/ReLU.circom";
 include "circuits/ml_components/Linear.circom";
 include "circuits/util/fixedPoint.circom";
-include "circuits/circomlib/comparators.circom";
+include "circuits/util/max.circom";
+include "circuits/util/min.circom";
 
+include "circuits/circomlib/comparators.circom";
+/*
+    This code is a playground to test circuit correctness for numerous operations.
+    Every computation needs to work here first prior being put into larger circuits.
+
+*/
 
 // template mm() {
 //     var m = 128;
@@ -136,4 +143,32 @@ template shift_test(){ //right shift a by b bits === a/(2^b)
     rs.bitsToShift <== b;
     signal output out <== rs.out;
 }
- component main = shift_test();       
+
+template sqrt_test(){
+    signal input a;
+    signal in <== 29999;
+
+    component sqrt = squareRoot();
+    sqrt.in <== in;
+    
+    signal output out <== sqrt.out;
+    log(out);
+
+
+
+    // signal root <== 2;
+    // signal root_plus_one <== root+1;
+
+    // component lt1 = LessEqThan(64);
+    // component lt2 = LessEqThan(64);
+
+    // lt1.in[0] <== root * root;
+    // lt1.in[1] <== in;
+
+    // lt2.in[0] <== root_plus_one * root_plus_one;
+    // lt2.in[1] <== in;
+
+    // 1 === lt1.out + lt2.out;
+
+}
+ component main = sqrt_test();       

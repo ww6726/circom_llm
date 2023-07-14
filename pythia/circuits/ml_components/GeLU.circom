@@ -5,7 +5,7 @@ include "../circomlib/comparators.circom";
 
 template L_i(fracBits){
     signal input x;
-    //witness; these values are by default scaled up by fracbits = 8.
+    //witness; these values are the fixpoint number of the approx polynomial.
     // signal a <== -18927;
     // signal b_neg <== 452;
     // signal b <== -453;
@@ -63,7 +63,6 @@ template Gelu(n,fracBits){
     component trunc2 = truncate(96,96 - 3*fracBits);
     trunc2.in <== L_out_4_time_fracBits;
 
-
     component po2 = powOfTwo(64);
     po2.in <== fracBits;
     signal one_scale <== po2.out;
@@ -77,8 +76,8 @@ template Gelu(n,fracBits){
 
     component trunc3 = truncate(96,96 - 2*fracBits);
     trunc3.in <== out_temp;
-    //    return x*0.5*(1 + L_out);
 
+    //    return x*0.5*(1 + L_out);
     signal output out <== trunc3.out;
 
 }

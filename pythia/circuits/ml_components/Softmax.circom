@@ -53,15 +53,17 @@ template find_z_p(fracBits){
  The implementation is based on method in paper
  "I-BERT: Integer-only BERT Quantization"
  */
-template Softmax(n, fracBits){
-    component po2 = powOfTwo(32);
-    po2.in <== fracBits;
-    signal scale <== po2.out;// we can modify this part to ensure non-zero integer softmax value
+
+template Softmax1D(n, fracBits){
+
 
     signal input in[n];
     //additional witness
     signal input qln2;
 
+    component po2 = powOfTwo(32);
+    po2.in <== fracBits;
+    signal scale <== po2.out;// we can modify this part to ensure non-zero integer softmax value
 
     component findMax = max(n, 32);
     findMax.in <== in;
@@ -94,9 +96,20 @@ template Softmax(n, fracBits){
         r[i] <-- q_temp[i] % sum;
         q_temp[i] === out[i] * sum + r[i];
     }
+}
 
+template Softmax(n, m,fracBits){
+    signal input in[n][m];
+    signal input qln2;
 
-    // for(var i = 0;i<n;i++){
-    //   log(out[i]);
-    // }
+    signal output out[n][m];
+    component softmax_all[n];
+    for(var i=0;i<n;i++){
+        softmax_all[i] = Softmax1D(n,fracBits);
+        softmax_all[i].in <== in[i];
+        softmax_all[i].qln2 <== qln2;
+
+        out[i] <== softmax_all[i].out;
+    }
+
 }

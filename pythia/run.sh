@@ -9,8 +9,7 @@ cd circuit_js
 
 
 json_content='{
-
-  "a": "4"
+  "a": "-4"
 }'
 
 # json_content='{

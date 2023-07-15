@@ -30,7 +30,6 @@ async function matmul(a, b, fracBits) {
     circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "matmul.circom"));
     console.log(circuit.dir);
     console.log(circuit.constraints);
-    console.log("====");
     const INPUT = {
         "a": a,
         "b": b,

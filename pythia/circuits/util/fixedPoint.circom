@@ -40,179 +40,43 @@ include "isPositive.circom";
 template absoluteValue(){
     signal input in;
     signal output out[2];
-    
-    component ispositive = isPositive();
-    ispositive.in <== in;
-    signal sign <== ispositive.out; // 0 - neg    1 - pos
-    var abs_bit = 2*sign -1;
+
+    component geq = GreaterEqThan(64);
+    geq.in[0] <== in;
+    geq.in[1] <== 0;
+
+    signal abs_bit <== 2*geq.out -1;
     out[0] <== abs_bit * in;
-    out[1] <== sign;
+    out[1] <== abs_bit;
+
+    // component ispositive = isPositive();
+    // ispositive.in <== in;
+    // signal sign <== ispositive.out; // 0 - neg    1 - pos
+    // var abs_bit = 2*sign -1;
+    // out[0] <== abs_bit * in;
+    // out[1] <== sign;
 
 }
 
 template truncate(bits_total, bits_want){
-
     signal input in;
-    signal output out;
     component abs = absoluteValue();
     abs.in <== in;
     signal in_abs <== abs.out[0];
     signal sign <== abs.out[1];
-    component n2b = Num2Bits(bits_total);//result has twice the bit. we need twice the bits to represent
+    component n2b = Num2Bits(32);//result has twice the bit. we need twice the bits to represent
+
     n2b.in <== in_abs;
-
-    var afterTruncate[bits_want];
-    var idx = bits_want-1;
-    for(var i = bits_total-1; i>=bits_total - bits_want;i--){
-        afterTruncate[idx] = n2b.out[i];
-        idx--;
-    }
-    component b2n = Bits2Num(bits_want);
-    for(var i =0;i<bits_want;i++){
-        b2n.in[i] <== afterTruncate[i];
-    }
-    
-    // var abs_bit = 2*sign -1;
-    // out <-- in_abs>>4*abs_bit;
+    var bits2Shift = bits_total - bits_want;
+    var scale = 2**bits2Shift;
+    signal temp <-- in_abs \ scale;
+    signal r <-- in_abs % scale;
+    in_abs === temp * scale + r;
 
 
-    var abs_bit = 2*sign -1;
-    out <== b2n.out*abs_bit;
-
-
-}
-//qn.m fixpoint
-template fixPointMult(n,m){
-    signal input a;
-    signal input b;
-    signal temp;
-    signal output out;
-    temp <== a*b;
-    
-    component n2b = Num2Bits((n+m)*2);//result has twice the bit. we need twice the bits to represent
-    component b2n = Bits2Num(n+m);// 
-
-    n2b.in <== temp;
-
-    var intBitNum = 2*n;
-    var floatBitNum = n+m - intBitNum;
-
-
-
-    var aTimesB_after_truncate[n+m];
-    var idx = n+m-1;
-
-    
-    for(var i = (n+m)*2-1; i>=n+m;i--){
-        aTimesB_after_truncate[idx] = n2b.out[i];
-        idx--;
-    }
-
-    for(var i =0;i<n+m;i++){
-        b2n.in[i] <== aTimesB_after_truncate[i];
-    }
-    out <== b2n.out;
+    signal output out <== temp*sign;
 }
 
-template fixPointMultSigned_old(n,m){
-    signal input a;
-    signal input b;
-    signal output c;
-    signal temp;
-    temp <== a*b;
-    component tc = truncate(2*(n+m),2*(n+m) -m);// first is how many bits in total. second is take left most how many
-    tc.in <== temp;
-    c <== tc.out;
-}
-template fixPointMultSigned(){
-    signal input a;
-    signal input b;
-    signal output c;
-    var n = 4;
-    var m = 4;
-
-    signal temp;
-    temp <== a*b;
-    component tc = truncate(2*(n+m),2*(n+m) -m);// first is how many bits in total. second is take left most how many
-    tc.in <== temp;
-    c <== tc.out;
-}
-template binLeftRightFlip(n){
-    signal input in[n];
-    signal output out[n];
-
-    var idx = n-1;
-    for(var i =0;i<n;i++){
-        out[i] <== in[idx];
-        idx--;
-    }
-
-}
-template longDivision(n){
-    signal input dividend[n];
-    signal input divisor[n];
-    signal output quotient[n];
-    component flip1 = binLeftRightFlip(n);
-    component flip2 = binLeftRightFlip(n);
-
-    signal dividend_flip[n];
-    signal divisor_flip[n];
-
-    flip1.in <== dividend;
-    flip2.in <== divisor;
-    dividend_flip <== flip1.out;
-    divisor_flip <== flip2.out;
-    var remainder[n];
-    component isZ[n];
-    for(var i = 0 ;i < n; i++){//initialize remainder
-        remainder[i] = dividend[i];
-    }
-
-
-    for(var i =0;i<n;i++){
-        isZ[i] = IsZero();
-        isZ[i].in <== remainder[i];
-    }
-}
-template fixPointDivSigned(n,m){
-    signal input dividend;
-    signal input divisor;
-    signal output quotient;
-
-    component abs_1 = absoluteValue();
-    component abs_2 = absoluteValue();
-    
-    signal dividend_abs;
-    signal divisor_abs;
-
-    abs_1.in <== dividend;
-    abs_2.in <== divisor;
-
-    dividend_abs <== abs_1.out;
-    divisor_abs <== abs_2.out;
-
-
-    var bits = n+m;
-    component n2b_1 = Num2Bits(bits);
-    component n2b_2 = Num2Bits(bits);
-    
-    n2b_1.in <== dividend_abs;
-    n2b_2.in <== divisor_abs;
-
-    signal dividend_bin[bits];
-    signal divisor_bin[bits];
-
-    for(var i = 0;i<bits;i++){
-        dividend_bin[i] <== n2b_1.out[i];
-        divisor_bin[i] <== n2b_2.out[i];
-    }
-
-    component longDiv = longDivision(bits);
-    longDiv.dividend <== dividend_bin;
-    longDiv.divisor <== divisor_bin;
-    //waiting for output
-
-}
 template Sum(n){
     signal input in[n];
     signal output out;
@@ -299,12 +163,12 @@ template findMSB(n){
     component n2b = Num2Bits(n);
     n2b.in <== in;
     signal in_bin[n] <== n2b.out;
-    signal indicesTimeVal[n];
+    signal indicesTimesVal[n];
     for(var i =0;i<n;i++){
-        indicesTimeVal[i] <== in_bin[i]*i;
+        indicesTimesVal[i] <== in_bin[i]*i;
     }
     component findMax = max(n,32);
-    findMax.in <==indicesTimeVal;
+    findMax.in <==indicesTimesVal;
     signal output out <== findMax.out;
 }
 template ceil(){//if remainder == 0, then no need to add one. Otherwise, add one

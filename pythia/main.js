@@ -11,6 +11,7 @@ const {floatToQ,floatToQ_matrix,floatToQ_multiD} = require('./build_circuit/basi
 const {add,sub,mul,div,sqrt} = require('./build_circuit/basic_components/arithmetics');
 const {linear} = require('./build_circuit/basic_components/linear');
 const {attn} = require('./build_circuit/llm_components/attention');
+const { log } = require("console");
 
 const fs = require('fs');
 const { exit } = require("process");
@@ -54,7 +55,7 @@ describe("main function for building circuit", function () {
     it("test", async () => {
         // const circuit = await wasm_tester(path.join(__dirname, "circuits", "FixedPoint_test.circom"));
         const N = 4;
-        const M = 16;
+        const M = 4;
 
         const n = 32;
         const inNum = 32;
@@ -110,7 +111,7 @@ describe("main function for building circuit", function () {
 
         var attention = await attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim,M);
         // console.log(fieldToReal(attention,M));
-
+        log(getShape(attention));
      
     });
 });

@@ -8,6 +8,7 @@ include "circuits/util/max.circom";
 include "circuits/util/min.circom";
 
 include "circuits/circomlib/comparators.circom";
+include "circuits/matrix/concat.circom";
 /*
     This code is a playground to test circuit correctness for numerous operations.
     Every computation needs to work here first prior being put into larger circuits.
@@ -92,24 +93,7 @@ include "circuits/circomlib/comparators.circom";
 //     return c;
 // }
 
-template div_test2(){
-    signal input x;
-    signal input y;
-    signal input z;
-    signal input b;
-    signal input q;
-    signal input r;
-    signal temp;
-    temp <== x*y;
-    signal a <== temp + z; 
-    signal output out;
-    component div = fixPointDiv();
-    div.a <== a;
-    div.b <== b;
-    div.q <== q;
-    div.r <== r;
-    out <== a;
-}
+
 
 template div_test(){
     signal input a;
@@ -171,4 +155,38 @@ template sqrt_test(){
     // 1 === lt1.out + lt2.out;
 
 }
- component main = sqrt_test();       
+template abs_div_test(){
+    signal input a;
+
+    signal x <== 123123123;
+    log(x \ 8);
+    var bits_total = 32;
+    
+    component trun = truncate(bits_total, bits_total - 3);
+    trun.in <== x;
+    log(trun.out);
+    log("=====================");
+    signal output out <== 2;
+}
+
+template multi_concat_test(){
+    signal input a;
+
+    var numHead = 4;
+    var n =2;
+    signal all[numHead][n][n];
+    component merge[numHead];
+    for(var i =0;i<numHead;i++){
+        for(var j =0;j<2;j++){
+            for(var k =0;k<2;k++){
+                merge[i] = Concat(numHead,n*i,n);
+                
+            }
+        }
+    }
+
+
+    signal output out <== 2;
+
+}   
+ component main = multi_concat_test();       

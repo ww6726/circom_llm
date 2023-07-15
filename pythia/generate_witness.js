@@ -69,7 +69,7 @@ describe("main function for generating witness", function () {
             }
         }
         sequence_length = n;
-        // var attention = attn(input, weight, bias,n,inNum, outNum,M,sequence_length);
+        var attention = attn(input, weight, bias,n,inNum, outNum,M,sequence_length);
         // console.log((attention));
 
         // const x = -0.898;
@@ -80,29 +80,29 @@ describe("main function for generating witness", function () {
         // console.log(gelu_out2);
 
 
-        // Example usage
-        var x = [0.32,0.39,0.45,0.42];
+        // // Example usage
+        // var x = [0.32,0.39,0.45,0.42];
         
-        //this is actual softmax
-        var output = softmax_(x);
-        console.log(`Exact value: ${output}`);
-        console.log("====================================");
+        // //this is actual softmax
+        // var output = softmax_(x);
+        // console.log(`Exact value: ${output}`);
+        // console.log("====================================");
 
-        //test paper's softmax on real numbers
-        const softmax_approx = softmax_poly(x);
-        console.log(`Approximation: ${softmax_approx}`);
-        console.log("====================================");
+        // //test paper's softmax on real numbers
+        // const softmax_approx = softmax_poly(x);
+        // console.log(`Approximation: ${softmax_approx}`);
+        // console.log("====================================");
 
 
-        //test paper's softmax using integers
-        for(var i =0;i<x.length;i++){
-            x[i] = floatToQ(N,M,x[i]);
-        }
-        let softmax_approx_i = softmax_poly_i(x,M);
-        for(var i =0;i<softmax_approx_i.length;i++){
-            softmax_approx_i[i] = floatToQ(N,M,softmax_approx_i[i]);
-        }
-        console.log(`Approximation_i: ${softmax_approx_i}`);
+        // //test paper's softmax using integers
+        // for(var i =0;i<x.length;i++){
+        //     x[i] = floatToQ(N,M,x[i]);
+        // }
+        // let softmax_approx_i = softmax_poly_i(x,M);
+        // for(var i =0;i<softmax_approx_i.length;i++){
+        //     softmax_approx_i[i] = floatToQ(N,M,softmax_approx_i[i]);
+        // }
+        // console.log(`Approximation_i: ${softmax_approx_i}`);
 
     });
 });

@@ -80,7 +80,6 @@ async function linear(input, weight, bias, n, inNum, outNum, fracBits) {
         ret[i][j] = (witness[idx++]);
       }
     }
-    // ret = truncate(ret,fracBits);
     return ret;
 }
 

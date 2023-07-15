@@ -31,7 +31,6 @@ function squareRoot(input, fracBits) {
         x[i+1]  = Math.floor((x[i] + (Math.floor(input / x[i])))/2);
         x_prev = x[i];
         i = i + 1;
-        log(x[i],x_prev);
     }while(i<10);
 
     return x_prev;

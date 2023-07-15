@@ -9,50 +9,102 @@ const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
 const {getShape,truncate} = require('../basic_components/util');
-
+const {squareRoot} = require('../basic_components/squareRoot');
 const fs = require('fs');
 
 
-function layerNorm(matrix, gamma, beta) {
-    const rows = matrix.length;
-    const cols = matrix[0].length;
-  
-    // Calculate the mean for each row
-    const mean = [];
-    for (let i = 0; i < rows; i++) {
-      let sum = 0;
-      for (let j = 0; j < cols; j++) {
-        sum += matrix[i][j];
-      }
-      const rowMean = sum / cols;
-      mean.push(rowMean);
+
+
+function layerNorm1D(input){
+    let sum = 0;
+    //find mean
+    let n = input.length;
+    for (let i = 0; i < n; i++) {
+      sum += input[i];
     }
-  
-    // Calculate the variance for each row
-    const variance = [];
-    for (let i = 0; i < rows; i++) {
-      let sum = 0;
-      for (let j = 0; j < cols; j++) {
-        sum += Math.pow(matrix[i][j] - mean[i], 2);
-      }
-      const rowVariance = sum / cols;
-      variance.push(rowVariance);
+    let E = sum/n;
+    //find variance
+    let sum2 = 0;
+    for (let i = 0; i < n; i++) {
+      sum2 += Math.pow(input[i] - E,2);//twice
     }
-  
-    // Apply layer normalization with gamma and beta
-    const normalizedMatrix = [];
-    for (let i = 0; i < rows; i++) {
-      const normalizedRow = [];
-      for (let j = 0; j < cols; j++) {
-        const normalizedValue = ((matrix[i][j] - mean[i]) / Math.sqrt(variance[i] + 1e-5)) * gamma[j] + beta[j];
-        normalizedRow.push(normalizedValue);
-      }
-      normalizedMatrix.push(normalizedRow);
+
+    let sum2_div_n = sum2 / n;
+    let VAR = Math.sqrt(sum2_div_n); 
+
+
+    //find layerNorm
+    let LM = [];
+    for (let i = 0; i < n; i++) {
+      LM[i] = (input[i] - E)/VAR;
     }
-  
-    return normalizedMatrix;
+
+    return LM;
+}
+
+function layerNorm2D(input, gamma, beta) {
+  const rows = input.length;
+  let output = [];
+  for(let i=0;i<rows;i++){
+    output[i] = layerNorm1D(input[i]);
   }
+  return output;
+}
+
+function layerNormBatch(input,gamma,beta){
+  const numBatch = input.length;
+  let output = [];
+  for(let i=0;i<numBatch;i++){
+    output[i] = layerNorm2D(input[i]);
+  }
+  return output;
+}
+
+
+function I_layerNorm1D(input,fracBits){
+  let sum = 0;
+  //find mean
+  let n = input.length;
+  for (let i = 0; i < n; i++) {
+    sum += input[i];
+  }
+  let E = Math.floor(sum/n);
+
+  //find variance
+  let sum2 = 0;
+  for (let i = 0; i < n; i++) {
+    sum2 += Math.pow(input[i] - E,2);//twice
+  }
+
+  
+  let sum2_div_n = Math.floor(sum2 /n);
+  let VAR = squareRoot(sum2_div_n,16);//single 
+
+  //find layerNorm
+  let LM = [];
+  for (let i = 0; i < n; i++) {
+    let in_E_scaled = (input[i] - E) * Math.pow(2,fracBits);
+    LM[i] = Math.floor(in_E_scaled/VAR);
+    log(LM[i]);
+
+  }
+
+  return LM;
+}
+function I_layerNorm2D(input,fracBits) {
+  const rows = input.length;
+  let output = [];
+  for(let i=0;i<rows;i++){
+    output[i] = I_layerNorm1D(input[i],fracBits);
+  }
+  return output;
+}
 module.exports = {
-    layerNorm,
+  layerNormBatch,
+  layerNorm2D,
+  layerNorm1D,
+
+  I_layerNorm1D,
+  I_layerNorm2D,
 
 };

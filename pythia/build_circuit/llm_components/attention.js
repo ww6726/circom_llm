@@ -31,6 +31,7 @@ async function attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim
   let circuit;
   generateCircomFile(n,inNum,outNum,dim,fracBits);
   circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "attention.circom"));
+  let qln2 = floatToQ(4,fracBits,Math.log(2));//for softmax
 
   const INPUT = {
       "in_first_layer": input,
@@ -40,6 +41,8 @@ async function attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim
       "rope_cos": ropeCos,
       "rope_sin": ropeSin,
       "mask": mask,
+
+      "qln2": qln2,
 
   }
   const witness = await circuit.calculateWitness(INPUT, true);

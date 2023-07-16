@@ -263,7 +263,17 @@ template attention(n,m,p,dim,fracbits){
         // signal output out[n][n] <== attn_head[0].out;
         multiHeadAttnOut[head_i] <== attn_head[head_i].out;
     }
-    
+    //merge all heads
+    signal output out[n][8*sizeQKV];
+
+    for(var i =0;i<n;i++){
+        for(var j =0;j<8*sizeQKV;j++){
+            var headIdx = j \ sizeQKV;
+            var idx = j % sizeQKV;
+            out[i][j] <== multiHeadAttnOut[headIdx][i][idx];
+        }
+    }
+
     log("output is done");
 
 }

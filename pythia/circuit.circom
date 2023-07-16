@@ -173,18 +173,41 @@ template multi_concat_test(){
     signal input a;
 
     var numHead = 4;
-    var n =2;
+    var n = 2;
     signal all[numHead][n][n];
-    component merge[numHead];
     for(var i =0;i<numHead;i++){
         for(var j =0;j<2;j++){
             for(var k =0;k<2;k++){
-                merge[i] = Concat(numHead,n*i,n);
-                
+                all[i][j][k] <== 2;
             }
         }
     }
 
+    //merging deprecvated
+    // var numMerge = numHead - 1;// EX: merge 4 elements takes 3 merge component
+    // component merge[numMerge];
+    // merge[0] = Concat(n,n,n);
+    // merge[0].a <== all[0];
+    // merge[0].b <== all[1];
+    // var copy = 2;
+    // for(var i = 1;i<numMerge;i++){
+    //     merge[i] = Concat(n,n*copy,n);
+    //     merge[i].a <== merge[i-1].out;
+    //     merge[i].b <== all[i+1];
+    //     copy = copy + 1;
+    // }
+    
+    //merging
+    signal mergedOut[n][numHead*n];
+    var numMerge = numHead - 1;
+    for(var i =0;i<n;i++){
+        for(var j =0;j<numHead*n;j++){
+            var blockIdx = j \ n;
+            var idx = j%n;
+
+            mergedOut[i][j] <== all[blockIdx][i][idx];
+        }
+    }
 
     signal output out <== 2;
 

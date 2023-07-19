@@ -11,10 +11,10 @@ const {gelu} = require('../build_circuit/basic_components/gelu');
 
 describe("gelu test", function () {
     this.timeout(100000000);
-    let fracBits = 16;
+    let fracBits = 8;
 
     it("check compare gelu results between python and circom", async () => {
-        let  x = [-0.422];
+        let  x = [-0.77,0.32,32.0];
         let x_I = []
         let n = x.length;
         for(let i = 0; i < n; i++){
@@ -32,7 +32,10 @@ describe("gelu test", function () {
         console.log("==================== circom gelu ==========================");
 
         let out = await gelu(x_I,fracBits);
-        log( parseFloat(Fr.toString(out))/(Math.pow(2,fracBits)));
+        for (let i = 0; i < n; i++) {
+            log(parseFloat(Fr.toString(out[i]))/(Math.pow(2,fracBits)));
+        }
+        // log( parseFloat(Fr.toString(out))/(Math.pow(2,fracBits)));
 
         // log("==================== Circom ==========================");
         // let out = await gelu(x,fracBits);

@@ -64,10 +64,11 @@ template truncate(bits_total, bits_want){
     abs.in <== in;
     signal in_abs <== abs.out[0];
     signal sign <== abs.out[1];
-    component n2b = Num2Bits(32);//result has twice the bit. we need twice the bits to represent
+    component n2b = Num2Bits(64);//result has twice the bit. we need twice the bits to represent
 
     n2b.in <== in_abs;
     var bits2Shift = bits_total - bits_want;
+
     var scale = 2**bits2Shift;
     signal temp <-- in_abs \ scale;
     signal r <-- in_abs % scale;

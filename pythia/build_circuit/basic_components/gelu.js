@@ -15,7 +15,7 @@ function generateCircomFile(n,fracBits) {
     const content = `pragma circom 2.0.0;
   include "../../circuits/ml_components/GeLU.circom";
   
-  component main = Gelu(${n},${fracBits});`;
+  component main = Gelu1D(${n},${fracBits});`;
     fs.writeFileSync(path.join(__dirname, "../circom_runner", "gelu.circom"), content);
 }
 async function gelu(input,fracBits) {
@@ -40,7 +40,11 @@ async function gelu(input,fracBits) {
 
     }
     const witness = await circuit.calculateWitness(INPUT, true);
-    let output = witness[1];
+    let output = [];
+    let idx = 1;
+    for(var i =0;i<n;i++){
+        output[i] = witness[idx++];
+    }
     return output;
 
 }

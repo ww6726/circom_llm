@@ -274,7 +274,7 @@ template attention(n,m,p,dim,fracbits){
         }
     }
 
-    log("output is done");
+    log("attn is done");
 
 }
 

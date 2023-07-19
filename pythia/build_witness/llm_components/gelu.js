@@ -78,13 +78,12 @@ function L_i(x,fracBits){
   let b_neg = Math.floor(1.769*Math.pow(2,fracBits));
   let b = Math.floor(-1.769*Math.pow(2,fracBits));
   let c = Math.floor(1* Math.pow(2,4*fracBits));
-  log(a,b_neg,b,c);
+  // log(a,b_neg,b,c);
   let x_abs = Math.abs(x);
   if(x_abs >= b_neg){
     x_abs = b_neg;
   }
   const ret = Math.sign(x) * (a * ((x_abs + b)**2) + c);
-  log(ret);
   return ret;
 
 }
@@ -98,7 +97,8 @@ function gelu_i(x,fracBits){
   let inv_q_root2 = Math.floor((1/Math.sqrt(2))*Math.pow(2,fracBits));  
 
   // let L_in = Math.floor(x / q_root2);
-  let L_in = Math.floor(x * inv_q_root2 / (Math.pow(2,fracBits)));
+  let L_in = Math.floor(x * inv_q_root2 / (Math.pow(2,fracBits))) + ((x * inv_q_root2 / (Math.pow(2,fracBits))) < 0 ? 1 : 0);
+
   let L_out = L_i(L_in,fracBits);
 
   let half = Math.floor(0.5 * Math.pow(2,fracBits));

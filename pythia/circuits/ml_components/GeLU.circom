@@ -20,9 +20,9 @@ template L_i(fracBits){
     component abs = absoluteValue();
     abs.in <== x;
     signal x_abs <== abs.out[0];
+
     signal sign <== abs.out[1]; //pos - 1; neg - 0
 
-    signal sign_actual <== 2*sign -1;
     component geq = GreaterEqThan(64);
     geq.in[0] <== x_abs;
     geq.in[1] <== b_neg;
@@ -32,13 +32,13 @@ template L_i(fracBits){
     signal med1 <== (x_ + b)*(x_ + b);
     signal med2 <== a*med1;
     signal med3 <== med2 + c;
-    signal output out <== sign_actual * med3; 
+    signal output out <== sign * med3; 
     // signal output out <== sign_actual * (a * ((x_ + b)*(x_ + b)) + c);
 
 
 }
 
-template Gelu(n,fracBits){
+template Gelu(fracBits){
     signal input in;
     //witness
     signal input q_root2_inv;
@@ -58,6 +58,8 @@ template Gelu(n,fracBits){
     li.b_neg <== gelu_b_neg;
     li.b <== gelu_b;
     li.c <== gelu_c;
+
+
 
     signal L_out_4_time_fracBits <== li.out;
     component trunc2 = truncate(96,96 - 3*fracBits);
@@ -80,4 +82,47 @@ template Gelu(n,fracBits){
     //    return x*0.5*(1 + L_out);
     signal output out <== trunc3.out;
 
+}
+template Gelu1D(n, fracBits){
+    signal input in[n];
+    //witness
+    signal input q_root2_inv;
+    signal input gelu_a;
+    signal input gelu_b_neg;
+    signal input gelu_b;
+    signal input gelu_c;
+
+    component gelu[n];
+    signal output out[n];
+    for(var i =0;i<n;i++){
+        gelu[i] = Gelu(fracBits);
+        gelu[i].in <== in[i];
+        gelu[i].q_root2_inv <== q_root2_inv;
+        gelu[i].gelu_a <== gelu_a;
+        gelu[i].gelu_b_neg <== gelu_b_neg;
+        gelu[i].gelu_b <== gelu_b;
+        gelu[i].gelu_c <== gelu_c;
+        out[i] <== gelu[i].out;
+    }
+}
+template Gelu2D(n,m,fracBits){
+    signal input in[n][m];
+    //witness
+    signal input q_root2_inv;
+    signal input gelu_a;
+    signal input gelu_b_neg;
+    signal input gelu_b;
+    signal input gelu_c;
+    component gelu1d[n];
+    signal output out[n][m];
+    for(var i =0;i<n;i++){
+        gelu1d[i] = Gelu1D(m,fracBits);
+        gelu1d[i].in <== in[i];
+        gelu1d[i].q_root2_inv <== q_root2_inv;
+        gelu1d[i].gelu_a <== gelu_a;
+        gelu1d[i].gelu_b_neg <== gelu_b_neg;
+        gelu1d[i].gelu_b <== gelu_b;
+        gelu1d[i].gelu_c <== gelu_c;
+        out[i] <== gelu1d[i].out;
+    }
 }

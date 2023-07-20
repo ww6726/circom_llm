@@ -26,12 +26,11 @@ component main = attention(${n},${m},${p},${dim},${fracBits});`;
 }
 
 
-async function attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim, fracBits) {
+async function attn(input, weight, bias,ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,n,inNum, outNum,dim, fracBits) {
 
   let circuit;
   generateCircomFile(n,inNum,outNum,dim,fracBits);
   circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "attention.circom"));
-  let qln2 = floatToQ(4,fracBits,Math.log(2));//for softmax
 
   const INPUT = {
       "in_first_layer": input,
@@ -43,6 +42,10 @@ async function attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim
       "mask": mask,
 
       "qln2": qln2,
+      "a_sm": a_sm,
+      "b_sm": b_sm,
+      "c_sm": c_sm,
+
 
   }
   const witness = await circuit.calculateWitness(INPUT, true);

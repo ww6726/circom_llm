@@ -118,6 +118,9 @@ template attention_single_head(n,headSize,dim,fracBits){
     signal input mask[n][n];
     //for softmax
     signal input qln2;
+    signal input a_sm;
+    signal input b_sm;
+    signal input c_sm;
 
     component splitQKV = Split(n,headSize,3);
     splitQKV.in <== head;
@@ -208,6 +211,10 @@ template attention_single_head(n,headSize,dim,fracBits){
     component sm = Softmax(n,n,fracBits);
     sm.in <== QKT_MASKED;
     sm.qln2 <== qln2;
+    sm.a_sm <== a_sm;
+    sm.b_sm <== b_sm;
+    sm.c_sm <== c_sm;
+
 
     signal softmax_out[n][n] <== sm.out;
 
@@ -220,7 +227,6 @@ template attention_single_head(n,headSize,dim,fracBits){
 
 }
 template attention(n,m,p,dim,fracbits){
-
     signal input in_first_layer[n][m];
     signal input weights_first_layer[m][p];
     signal input bias_first_layer[n][p];
@@ -232,6 +238,9 @@ template attention(n,m,p,dim,fracbits){
 
     //witness for softmax
     signal input qln2;
+    signal input a_sm;
+    signal input b_sm;
+    signal input c_sm;
 
     component linear_qkv = Linear(n,m,p,fracbits);
 
@@ -254,18 +263,18 @@ template attention(n,m,p,dim,fracbits){
     signal multiHeadAttnOut[numHeads][n][sizeQKV];
     for(var head_i=0;head_i<8;head_i++){
         attn_head[head_i]= attention_single_head(n,headSize,dim,fracbits);
-        attn_head[head_i].head <== headsAll[0];
+        attn_head[head_i].head <== headsAll[head_i];
         attn_head[head_i].rope_cos <== rope_cos;
         attn_head[head_i].rope_sin <== rope_sin;
         attn_head[head_i].mask <== mask;
         attn_head[head_i].qln2 <== qln2;
-
-        // signal output out[n][n] <== attn_head[0].out;
+        attn_head[head_i].a_sm <== a_sm;
+        attn_head[head_i].b_sm <== b_sm;
+        attn_head[head_i].c_sm <== c_sm;
         multiHeadAttnOut[head_i] <== attn_head[head_i].out;
     }
     //merge all heads
     signal output out[n][8*sizeQKV];
-
     for(var i =0;i<n;i++){
         for(var j =0;j<8*sizeQKV;j++){
             var headIdx = j \ sizeQKV;
@@ -273,8 +282,6 @@ template attention(n,m,p,dim,fracbits){
             out[i][j] <== multiHeadAttnOut[headIdx][i][idx];
         }
     }
-
-    log("attn is done");
 
 }
 

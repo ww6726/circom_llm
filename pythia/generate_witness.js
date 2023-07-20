@@ -10,9 +10,11 @@ const assert = chai.assert;
 const {floatToQ,QToFloat,floatToQ_signed} = require('./build_witness/basic_components/util');
 const {linear} = require('./build_witness/basic_components/linear');
 const {attn} = require('./build_witness/llm_components/attention');
-const {gelu,gelu_poly} = require('./build_witness/llm_components/gelu');
+const {gptLayer} = require('./build_witness/llm_components/gptLayer');
+const {pythia} = require('./build_witness/pythia');
 
 const {softmax,softmax_,softmax_poly,softmax_poly_i} = require('./build_witness/basic_components/softmax');
+const { log } = require("console");
 
 
 function getShape(data) {
@@ -30,79 +32,184 @@ function getShape(data) {
       return [];
     }
   }
-describe("main function for generating witness", function () {
+describe("main function for generating witness and verifying", function () {
     this.timeout(100000000);
 
     it("test", async () => {
-        const N = 4;
-        const M = 4;
+        // const N = 4;
+        // const M = 8;
+        // let fracBits = M;
+        // const n = 32;
+        // const inNum = 32;
+        // const outNum = 96;
+        // let dim = 2;
 
-        const n = 32;
-        const inNum = 32;
-        const outNum = 96;
-
-        var input = [];
-        var weight = [];
-        var bias = [];
-
-
-        for (let i = 0; i < n; i++) {
-            input[i] = [];
-            for (let j = 0; j < inNum; j++) {
-                const number = 0.34242;
-                input[i][j] = number;
-            }
-        }
-        for (let i = 0; i < inNum; i++) {
-            weight[i] = [];
-
-            for (let j = 0; j < outNum; j++) {
-                const number = -0.234236;
-                weight[i][j] = number;
-            }
-        }
-        for (let i = 0; i < n; i++) {
-            bias[i] = [];
-            for (let j = 0; j < outNum; j++) {
-                const number = -0.3329;
-                bias[i][j] = number;
-            }
-        }
-        sequence_length = n;
-        var attention = attn(input, weight, bias,n,inNum, outNum,M,sequence_length);
-        // console.log((attention));
-
-        // const x = -0.898;
-        // console.log("input: ",x);
-
-        // console.log("Ramy's polynomial approximation: ");
-        // var gelu_out2 = gelu_poly(x);
-        // console.log(gelu_out2);
+        // var input = [];
+        // var weight = [];
+        // var bias = [];
 
 
-        // // Example usage
-        // var x = [0.32,0.39,0.45,0.42];
+        // for (let i = 0; i < n; i++) {
+        //     input[i] = [];
+        //     for (let j = 0; j < inNum; j++) {
+        //         const number = i+j;
+        //         input[i][j] = number;
+        //     }
+        // }
+        // for (let i = 0; i < inNum; i++) {
+        //     weight[i] = [];
+
+        //     for (let j = 0; j < outNum; j++) {
+        //         const number = i+j;
+        //         weight[i][j] = number;
+        //     }
+        // }
+        // for (let i = 0; i < n; i++) {
+        //     bias[i] = [];
+        //     for (let j = 0; j < outNum; j++) {
+        //         const number = i+j;
+        //         bias[i][j] = number;
+        //     }
+        // }
         
-        // //this is actual softmax
-        // var output = softmax_(x);
-        // console.log(`Exact value: ${output}`);
-        // console.log("====================================");
+        // sequence_length = n;
 
-        // //test paper's softmax on real numbers
-        // const softmax_approx = softmax_poly(x);
-        // console.log(`Approximation: ${softmax_approx}`);
-        // console.log("====================================");
+        // //generate weights and bias for MLP 1,2,3
+        // let mlp_Linear1_size = 4;
+        // let weight_mlp_1 = [];
+        // let bias_mlp_1 = [];
+        // let weight_mlp_2 = [];
+        // let bias_mlp_2 = [];
+     
 
-
-        // //test paper's softmax using integers
-        // for(var i =0;i<x.length;i++){
-        //     x[i] = floatToQ(N,M,x[i]);
+        // for (let i = 0; i < inNum; i++) {
+        //   weight_mlp_1[i] = [];
+        //   for (let j = 0; j < mlp_Linear1_size; j++) {
+        //       weight_mlp_1[i][j] = i+j;
+        //   }
         // }
-        // let softmax_approx_i = softmax_poly_i(x,M);
-        // for(var i =0;i<softmax_approx_i.length;i++){
-        //     softmax_approx_i[i] = floatToQ(N,M,softmax_approx_i[i]);
+        // for (let i = 0; i < n; i++) {
+        //   bias_mlp_1[i] = [];
+        //   for (let j = 0; j < mlp_Linear1_size; j++) {
+        //       bias_mlp_1[i][j] = i+j;
+        //   }
         // }
-        // console.log(`Approximation_i: ${softmax_approx_i}`);
+
+        // for (let i = 0; i < mlp_Linear1_size; i++) {
+        //   weight_mlp_2[i] = [];
+        //   for (let j = 0; j < inNum; j++) {
+        //       weight_mlp_2[i][j] = i+j;
+        //   }
+        // }
+        // for (let i = 0; i < n; i++) {
+        //   bias_mlp_2[i] = [];
+        //   for (let j = 0; j < inNum; j++) {
+        //       bias_mlp_2[i][j] = i+j;
+        //   }
+        // }
+        // var attention = attn(input, weight, bias,n,inNum, outNum,fracBits,sequence_length);
+
+        // let gpt_out = gptLayer(input, weight, bias,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,
+        //                         n,inNum, outNum,mlp_Linear1_size,dim,fracBits,sequence_length);
+
+
+
+        // ===========================================================================
+        // ===========================================================================
+        // ========================    pythia test    ================================
+        // ===========================================================================
+        // ===========================================================================
+
+        //make each input, witness 3D.
+        let fracBits = 8;
+        let numLayer = 6;
+        let n = 32;
+        let m = 32;
+        let p = 96;
+        let mlp_Linear1_size = 4;
+
+        let dim = 2;
+        //weights, biases 
+        let input = [];//2D
+        let weights = [];//3D
+        let biases = [];//3D
+        let weights_mlp_1st=[];//3D;
+        let biases_mlp_1st=[];
+        let weights_mlp_2nd=[];
+        let biases_mlp_2nd=[];
+        let sequence_length = n;
+
+        //initialize all winesses (soon be replaced by real witnesses)
+        for(var i =0;i<n;i++){
+          input[i] = []
+          for(var j =0;j<m;j++){
+            input[i][j] = i+j;
+          }
+        }
+        //attn part
+        for(var l = 0;l<numLayer;l++){
+          weights[l] = [];
+          for(var i =0;i<m;i++){
+            weights[l][i] = [];
+            for(var j =0;j<p;j++){
+              weights[l][i][j] = i+j;
+            }
+          }
+        }
+        for(var l = 0;l<numLayer;l++){
+          biases[l] = [];
+          for(var i =0;i<n;i++){
+            biases[l][i] = [];
+            for(var j =0;j<p;j++){
+              biases[l][i][j] = i+j;
+            }
+          }
+        }
+        //mlp part
+        for(var l = 0;l<numLayer;l++){
+          weights_mlp_1st[l] = [];
+          for(var i =0;i<m;i++){
+            weights_mlp_1st[l][i] = [];
+            for(var j =0;j<mlp_Linear1_size;j++){
+              weights_mlp_1st[l][i][j] = i*j;
+            }
+          }
+        }
+        for(var l = 0;l<numLayer;l++){
+          biases_mlp_1st[l] = [];
+          for(var i =0;i<n;i++){
+            biases_mlp_1st[l][i] = [];
+            for(var j =0;j<mlp_Linear1_size;j++){
+              biases_mlp_1st[l][i][j] = i*j;
+            }
+          }
+        }
+
+        for(var l = 0;l<numLayer;l++){
+          weights_mlp_2nd[l] = [];
+          for(var i =0;i<mlp_Linear1_size;i++){
+            weights_mlp_2nd[l][i] = [];
+            for(var j =0;j<m;j++){
+              weights_mlp_2nd[l][i][j] = i*j;
+            }
+          }
+        }
+        for(var l = 0;l<numLayer;l++){
+          biases_mlp_2nd[l] = [];
+          for(var i =0;i<n;i++){
+            biases_mlp_2nd[l][i] = [];
+            for(var j =0;j<m;j++){
+              biases_mlp_2nd[l][i][j] = i*j;
+            }
+          }
+        }
+
+        
+        
+
+        let pythia_out = pythia(input, weights, biases,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
+                                numLayer,mlp_Linear1_size,n,m,p,dim,fracBits,sequence_length);
+                                
 
     });
 });

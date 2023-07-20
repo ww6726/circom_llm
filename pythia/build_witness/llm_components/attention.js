@@ -234,58 +234,76 @@ function saveWitnessToFile(witness, filename) {
   const data = witness.map(row => row.join(' ')).join('\n');
   fs.writeFileSync(filename, data);
 }
-function attn(input, weight, bias,n,inNum, outNum, fracBits,sequence_length) {
+
+function attnHead(head,dim,sequence_length){
+    
+  const q_k_v =  splitQKV(head);
+  var query = q_k_v[0];
+  var key   = q_k_v[1];
+  var value = q_k_v[2];
+
+  const query_rot = query.map(row => row.slice(0, dim));
+  const query_pass = query.map(row => row.slice(dim));
+  const key_rot = key.map(row => row.slice(0, dim));
+  const key_pass = key.map(row => row.slice(dim));
+
+
+  //apply ROPE
+
+  const max_position_embedding = sequence_length;//32 for now
+  let position_ids = Array.from({ length: max_position_embedding }, (_, index) => index);
+  const[sin, cos] = computeROPE(dim,max_position_embedding);
+
+  // //store witness for circuit. NOTE: This part was moved 
+  // const witness_sin = 'witness/ROPE_sin.txt';
+  // saveWitnessToFile(sin, witness_sin);
+  // const witness_cos = 'witness/ROPE_cos.txt';
+  // saveWitnessToFile(cos, witness_cos);
+
+  const[query_emb, key_emb] = applyRotaryPosEmb(query_rot,key_rot,cos,sin,position_ids,dim);
+
+  query = concatenateMatrices(query_emb,query_pass);
+  key = concatenateMatrices(key_emb,key_pass);
+
+  const keyT = transposeMatrix(key);
+  var queryKT = matrixMultiplication(query,keyT);
+
+  queryKT = divideByConstant(queryKT,8);
+
+  //ADD MASKing
+  let mask = createMask(queryKT.length);
+  const witness_mask = 'witness/mask.txt';
+  saveWitnessToFile(mask, witness_mask);
+  queryKT_masked = elementwiseAdd(queryKT,mask);
+  //softmax
+  let softMaxOut = softmax(queryKT_masked);
+  //multiply V
+
+  let out = matrixMultiplication(softMaxOut,value);
+  return out;
+}
+function attn(input, weight, bias,n,inNum, outNum, dim,fracBits,sequence_length) {
   const query_key_value = linear(input, weight, bias,n,inNum, outNum,fracBits);
-
   const headsAll = splitToHeads(query_key_value,8);
-  const dim = 2;
-
-  for(let i = 0;i < 1;i++){
+  attnAllHeads = [];
+  for(let i = 0;i < 8;i++){
+    
     const head = headsAll[i];
-
-    const q_k_v =  splitQKV(head);
-    var query = q_k_v[0];
-    var key   = q_k_v[1];
-    var value = q_k_v[2];
-
-    const query_rot = query.map(row => row.slice(0, dim));
-    const query_pass = query.map(row => row.slice(dim));
-    const key_rot = key.map(row => row.slice(0, dim));
-    const key_pass = key.map(row => row.slice(dim));
-
-
-    //apply ROPE
-    const max_position_embedding = sequence_length;//32 for now
-    let position_ids = Array.from({ length: max_position_embedding }, (_, index) => index);
-    const[sin, cos] = computeROPE(dim,max_position_embedding);
-
-    // //store witness for circuit. NOTE: This part was moved 
-    // const witness_sin = 'witness/ROPE_sin.txt';
-    // saveWitnessToFile(sin, witness_sin);
-    // const witness_cos = 'witness/ROPE_cos.txt';
-    // saveWitnessToFile(cos, witness_cos);
-
-    const[query_emb, key_emb] = applyRotaryPosEmb(query_rot,key_rot,cos,sin,position_ids,dim);
-
-    query = concatenateMatrices(query_emb,query_pass);
-    key = concatenateMatrices(key_emb,key_pass);
-
-    const keyT = transposeMatrix(key);
-    var queryKT = matrixMultiplication(query,keyT);
-    return queryKT;
-
-    // queryKT = divideByConstant(queryKT,8);
-
-    // //ADD MASKing
-    // let mask = createMask(queryKT.length);
-    // const witness_mask = 'witness/mask.txt';
-    // saveWitnessToFile(mask, witness_mask);
-    // queryKT_masked = elementwiseAdd(queryKT,mask);
-    // let softMaxOut = softmax(queryKT_masked);
-
-
-    // let attn = matrixMultiplication(softMaxOut,value);   
+    attnAllHeads[i] = attnHead(head,dim,sequence_length);
   }
+  attention
+  let attn = [];
+  let sizeQKV = getShape(attnAllHeads)[2];
+  for(let i =0;i <n;i++){
+    attn[i] = [];
+    for(let j =0;j <8*sizeQKV;j++){
+        let headIdx = Math.floor(j / sizeQKV);
+        let idx = j % sizeQKV;
+        attn[i][j] = attnAllHeads[headIdx][i][idx];
+    }
+  }
+
+  return attn;
 }
 module.exports = {
   attn,

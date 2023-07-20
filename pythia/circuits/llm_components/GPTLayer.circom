@@ -1,10 +1,10 @@
+pragma circom 2.0.0;
 include "../llm_components/attention.circom";
 include "../llm_components/mlp.circom";
 include "../ml_components/LayerNorm.circom";
 include "../matrix/matEleSum.circom";
 
 template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
-    log("Start!");
     signal input in[n][m];
     //attention weights, bias
     signal input weight[m][p];
@@ -15,6 +15,9 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     signal input mask[n][n];
     //softmax
     signal input qln2;
+    signal input a_sm;
+    signal input b_sm;
+    signal input c_sm;
 
 
     //MLP layer weights, bias 
@@ -33,7 +36,6 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     component lm_1st = LayerNorm(n,m,fracBits);
     lm_1st.in <== in;
     signal lm_1st_out[n][m] <== lm_1st.out;
-    log("=====1st layernorm done====");
     //attention layer
     component attn =  attention(n,m,p,attention_dim,fracBits);
     attn.in_first_layer <== lm_1st_out;
@@ -43,13 +45,16 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     attn.rope_sin <== rope_sin;
     attn.mask <== mask;
     attn.qln2 <== qln2;
+    attn.a_sm <== a_sm;
+    attn.b_sm <== b_sm;
+    attn.c_sm <== c_sm;
+
     signal attn_out[n][m] <== attn.out;//this is also needed in residual connection
 
     //2nd LayerNorm layer
     component lm_2nd = LayerNorm(n,m,fracBits);
     lm_2nd.in <== in;
     signal lm_2nd_out[n][m] <== lm_2nd.out;
-    log("=====2nd layernorm done====");
 
     // MLP Layer
     component mlp = MLP(n,m,mlp_Linear1_size,fracBits);

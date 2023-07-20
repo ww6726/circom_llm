@@ -7,9 +7,12 @@ include "../util/max.circom";
 include "../util/fixedPoint.circom";
 template L_int(fracBits){
     signal input p;
-    signal a <== 91;//hardcoded 4-bits quantization
-    signal b <== 21;
-    signal c <== 22544;
+    // signal a <== 91; //hardcoded 4-bits quantization; need to change this.
+    // signal b <== 21;
+    // signal c <== 22544;
+    signal input a;
+    signal input b;
+    signal input c;
 
     signal med1 <== (p+b)*(p+b);
     signal med2 <== a*med1;
@@ -20,9 +23,12 @@ template L_int(fracBits){
 template find_z_p(fracBits){
     signal input x_;
     signal input qln2;
+    signal input a_sm;
+    signal input b_sm;
+    signal input c_sm;
 
     var scale = fracBits<<2;
-    signal z <-- -x_ \ qln2;//quotient
+    signal z <-- -x_ \ qln2; //quotient
     signal z_r <-- -x_ % qln2;
     -x_ === qln2*z + z_r;
 
@@ -30,6 +36,9 @@ template find_z_p(fracBits){
    
     component Lint = L_int(fracBits);
     Lint.p <== p;
+    Lint.a <== a_sm;
+    Lint.b <== b_sm;
+    Lint.c <== c_sm;
 
     signal p_l <== Lint.out;  
     
@@ -55,17 +64,18 @@ template find_z_p(fracBits){
  */
 
 template Softmax1D(n, fracBits){
-
-
     signal input in[n];
     //additional witness
     signal input qln2;
+    signal input a_sm;
+    signal input b_sm;
+    signal input c_sm;
 
     component po2 = powOfTwo(32);
     po2.in <== fracBits;
     signal scale <== po2.out;// we can modify this part to ensure non-zero integer softmax value
 
-    component findMax = max(n, 32);
+    component findMax = max(n, 64);
     findMax.in <== in;
     signal max_val <== findMax.out;
 
@@ -80,6 +90,10 @@ template Softmax1D(n, fracBits){
         zp[i] = find_z_p(fracBits);
         zp[i].x_ <== q[i];
         zp[i].qln2 <== qln2;
+        zp[i].a_sm <== a_sm;
+        zp[i].b_sm <== b_sm;
+        zp[i].c_sm <== c_sm;
+
         q_exp[i] <== zp[i].out;
     }
     component findSum = Sum(n);
@@ -100,7 +114,12 @@ template Softmax1D(n, fracBits){
 
 template Softmax(n, m,fracBits){
     signal input in[n][m];
+
+    //witness
     signal input qln2;
+    signal input a_sm;
+    signal input b_sm;
+    signal input c_sm;
 
     signal output out[n][m];
     component softmax_all[n];
@@ -108,7 +127,9 @@ template Softmax(n, m,fracBits){
         softmax_all[i] = Softmax1D(n,fracBits);
         softmax_all[i].in <== in[i];
         softmax_all[i].qln2 <== qln2;
-
+        softmax_all[i].a_sm <== a_sm;
+        softmax_all[i].b_sm <== b_sm;
+        softmax_all[i].c_sm <== c_sm;
         out[i] <== softmax_all[i].out;
     }
 

@@ -132,7 +132,7 @@ function L_int(p, fracBits){
   let a = Math.floor(0.3585*Math.pow(2,2*fracBits));
   let b = Math.floor(1.353*Math.pow(2,fracBits));
   let c = Math.floor(0.344*Math.pow(2,4*fracBits));
-  log("abc: ", a,", ",b,", ",c);
+  // log("abc: ", a,", ",b,", ",c);
   return (a *((p + b)**2) + c);
 }
 function find_z_p_2(x_,fracBits){
@@ -150,7 +150,7 @@ function find_z_p_2(x_,fracBits){
   let p_out = Math.floor(p_l / Math.pow(2,z));//quotient, and right shift
   let p_out_remainder = p_l % Math.pow(2,z);//remainder
 
-  log(p_l,",",z,",",p_out,",",p_out_remainder);
+  // log(p_l,",",z,",",p_out,",",p_out_remainder);
   scale = Math.pow(2,4*fracBits);
 
 
@@ -159,7 +159,7 @@ function find_z_p_2(x_,fracBits){
   // console.log((L(p))*Math.pow(2,-z));
   return [p_out,scale,p_out_remainder];// p_out is output and witness we need
 }
-function softmax_poly_i(q,fracBits){
+function softmax_i(q,fracBits){
 
   let max = Math.max(...q);
   let q_ = subtractVector(q, max);
@@ -197,8 +197,8 @@ function softmax_poly_i(q,fracBits){
     p_outi[i] = p_exp[i] * p_sum_inv;
     p_out[i] = p_outi[i]/scale;
   }
-  console.log(p_outi);
-  console.log(p_out);
+  // console.log(p_outi);
+  // console.log(p_out);
   return p_out;
 
 }
@@ -206,5 +206,5 @@ module.exports = {
     softmax,
     softmax_,
     softmax_poly,
-    softmax_poly_i,
+    softmax_i,
 };

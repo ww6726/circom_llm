@@ -71,7 +71,16 @@ function gelu_(x){
     const L_out = L(L_in);
     return x*0.5*(1 + L_out);
 }
-
+function gelu2D(x){
+  let ret = [];
+  for(var i = 0;i<x.length;i++){
+    ret[i] = [];
+    for(var j =0;j<x[0].length;j++){
+      ret[i][j] = gelu_(x[i][j]);
+    }
+  }
+  return ret;
+}
 
 function L_i(x,fracBits){
   let a = Math.floor(-0.2888*Math.pow(2,2*fracBits));
@@ -110,5 +119,6 @@ function gelu_i(x,fracBits){
   module.exports = {
     gelu_,
     gelu_i,
+    gelu2D,
   };
   

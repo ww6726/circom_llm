@@ -1,3 +1,4 @@
+pragma circom 2.0.0;
 include "../util/fixedPoint.circom";
 include "../circomlib/bitify.circom";
 include "../circomlib/comparators.circom";

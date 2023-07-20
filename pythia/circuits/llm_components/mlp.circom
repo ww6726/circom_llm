@@ -1,7 +1,7 @@
+pragma circom 2.0.0;
 include "../ml_components/Linear.circom";
 include "../ml_components/GeLU.circom";
 template MLP(n,m,p,fracBits){
-
     signal input in[n][m];
     //first Linear
     signal input weight1[m][p];

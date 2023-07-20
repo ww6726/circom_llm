@@ -28,7 +28,6 @@ template Num2Bits(n) {
     signal input in;
     signal output out[n];
     var lc1=0;
-
     var e2=1;
     for (var i = 0; i<n; i++) {
         out[i] <-- (in >> i) & 1;

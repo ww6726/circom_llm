@@ -13,6 +13,7 @@ const {linear} = require('./build_circuit/basic_components/linear');
 const {gptLayer} = require('./build_circuit/llm_components/gptLayer');
 const {attn} = require('./build_circuit/llm_components/attention');
 const {mlp} = require('./build_circuit/llm_components/mlp');
+const {pythia} = require('./build_circuit/pythia');
 
 const { log } = require("console");
 
@@ -58,7 +59,7 @@ describe("main function for building circuit", function () {
     it("test", async () => {
         // const circuit = await wasm_tester(path.join(__dirname, "circuits", "FixedPoint_test.circom"));
         const N = 4;
-        const fracBits = 4;
+        const fracBits = 8;
         let M = fracBits;
         let n = 32;
         let inNum = 32;
@@ -72,9 +73,8 @@ describe("main function for building circuit", function () {
 
         for (let i = 0; i < n; i++) {
             input[i] = [];
-
             for (let j = 0; j < inNum; j++) {
-                const number = 0.34242;
+                const number = i+j;
                 input[i][j] = floatToQ(N,M,number);
             }
         }
@@ -82,14 +82,14 @@ describe("main function for building circuit", function () {
             weight[i] = [];
 
             for (let j = 0; j < outNum; j++) {
-                const number = -0.234236;
+                const number = (i+j);
                 weight[i][j] = floatToQ(N,M,number);
             }
         }
         for (let i = 0; i < n; i++) {
             bias[i] = [];
             for (let j = 0; j < outNum; j++) {
-                const number = -0.3329;
+                const number = i+j;
                 bias[i][j] = floatToQ(N,M,number);
             }
         }
@@ -105,14 +105,14 @@ describe("main function for building circuit", function () {
         for (let i = 0; i < inNum; i++) {
           weight_mlp_1[i] = [];
           for (let j = 0; j < mlp_Linear1_size; j++) {
-              const number = 0.34242;
+              const number = i+j;
               weight_mlp_1[i][j] = floatToQ(N,M,number);
           }
         }
         for (let i = 0; i < n; i++) {
           bias_mlp_1[i] = [];
           for (let j = 0; j < mlp_Linear1_size; j++) {
-              const number = 0.34242;
+              const number = i+j;
               bias_mlp_1[i][j] = floatToQ(N,M,number);
           }
         }
@@ -120,14 +120,14 @@ describe("main function for building circuit", function () {
         for (let i = 0; i < mlp_Linear1_size; i++) {
           weight_mlp_2[i] = [];
           for (let j = 0; j < inNum; j++) {
-              const number = 0.34242;
+              const number = i+j;
               weight_mlp_2[i][j] = floatToQ(N,M,number);
           }
         }
         for (let i = 0; i < n; i++) {
           bias_mlp_2[i] = [];
           for (let j = 0; j < inNum; j++) {
-              const number = 0.34242;
+              const number = i+j;
               bias_mlp_2[i][j] = floatToQ(N,M,number);
           }
         }
@@ -142,6 +142,9 @@ describe("main function for building circuit", function () {
         const mask = floatToQ_matrix(N,M,readWitness(MASK_FILE));
         //softmax
         let qln2 = floatToQ(4,M,Math.log(2));
+        let a_sm = floatToQ(4,2*fracBits,0.3585);
+        let b_sm = floatToQ(4,fracBits,1.353);
+        let c_sm = floatToQ(4,4*fracBits,0.344);
         //gelu
         let q_root2_inv = Math.floor((1/Math.sqrt(2))*Math.pow(2,fracBits));  
         let a = Math.floor(-0.2888*Math.pow(2,2*fracBits));
@@ -149,14 +152,17 @@ describe("main function for building circuit", function () {
         let b = Math.floor(-1.769*Math.pow(2,fracBits));
         let c = Math.floor(1* Math.pow(2,4*fracBits));
         
-        // var attention = await attn(input, weight, bias,ropeCos,ropeSin,mask,n,inNum, outNum,dim,M);
+        // var attention = await attn(input, weight, bias,ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,n,inNum, outNum,dim,M);
         // var mlp_out = await mlp(input, weight_mlp_1, bias_mlp_1,weight_mlp_2,bias_mlp_2,
         //                         q_root2_inv,a,b_neg,b,c,n,inNum,mlp_Linear1_size, fracBits);
 
         var gpt_out = await gptLayer(input, weight, bias,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,mask,ropeCos,ropeSin,
-                                     qln2,q_root2_inv,a,b_neg,b,c,n,inNum, outNum,mlp_Linear1_size,dim,fracBits); 
-        // console.log(fieldToReal(attention,M));
-        // log(getShape(attention));
-     
+                                     qln2,q_root2_inv,a,b_neg,b,c,a_sm,b_sm,c_sm,n,inNum, outNum,mlp_Linear1_size,dim,fracBits); 
+        console.log(fieldToReal(gpt_out,fracBits));
+
+        
+
+
+
     });
 });

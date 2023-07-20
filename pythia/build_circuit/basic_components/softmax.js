@@ -15,7 +15,7 @@ function generateCircomFile(n,fracBits) {
     const content = `pragma circom 2.0.0;
   include "../../circuits/ml_components/Softmax.circom";
   
-  component main = Softmax(${n},${fracBits});`;
+  component main = Softmax1D(${n},${fracBits});`;
     fs.writeFileSync(path.join(__dirname, "../circom_runner", "softmax.circom"), content);
 }
 function readWitness(filename) {
@@ -47,9 +47,9 @@ async function softmax(input,fracBits) {
     circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "softmax.circom"));
 
     let qln2 = floatToQ(4,fracBits,Math.log(2));
-    // let a = floatToQ(4,2*fracBits,0.3585);
-    // let b = floatToQ(4,fracBits,1.353);
-    // let c = floatToQ(4,4*fracBits,0.344);
+    let a = floatToQ(4,2*fracBits,0.3585);
+    let b = floatToQ(4,fracBits,1.353);
+    let c = floatToQ(4,4*fracBits,0.344);
 
     let p_exp_File = "witness/p_exp.txt";
     let p_exp = (readTxtFileIntoMultiDimArray(p_exp_File));
@@ -61,8 +61,11 @@ async function softmax(input,fracBits) {
    const INPUT = {
         "in": input,
         "qln2":qln2,
-      
 
+        "a_sm": a,
+        "b_sm": b,
+        "c_sm": c,
+    
     }
     const witness = await circuit.calculateWitness(INPUT, true);
     let output = [];

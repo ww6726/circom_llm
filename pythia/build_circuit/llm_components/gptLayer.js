@@ -27,12 +27,13 @@ component main = gptLayer(${n},${m},${p},${attention_dim},${mlp_Linear1_size},${
 
 
 async function gptLayer(input, weight, bias,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,mask,ropeCos,ropeSin,
-                    qln2,q_root2_inv,a,b_neg,b,c,n,inNum, outNum,mlp_Linear1_size,dim,fracBits) {
+                    qln2,q_root2_inv,a,b_neg,b,c,a_sm,b_sm,c_sm,n,inNum, outNum,mlp_Linear1_size,dim,fracBits) {
+  
+
 
   let circuit;
   generateCircomFile(n,inNum,outNum,dim,mlp_Linear1_size,fracBits);
   circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "gptlayer.circom"));
-
   const INPUT = {
       "in": input,
       "weight": weight,
@@ -41,7 +42,11 @@ async function gptLayer(input, weight, bias,weight_mlp_1,bias_mlp_1,weight_mlp_2
       "rope_cos": ropeCos,
       "rope_sin": ropeSin,
       "mask": mask,
+      
       "qln2": qln2,
+      "a_sm": a_sm,
+      "b_sm": b_sm,
+      "c_sm": c_sm,
 
       "weight_mlp_1": weight_mlp_1,
       "bias_mlp_1": bias_mlp_1,
@@ -53,6 +58,8 @@ async function gptLayer(input, weight, bias,weight_mlp_1,bias_mlp_1,weight_mlp_2
       "gelu_b_neg": b_neg,
       "gelu_b": b,
       "gelu_c": c,
+
+
 
   }
   log("hello");

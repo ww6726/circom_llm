@@ -282,7 +282,8 @@ function attnHead(head,dim,sequence_length){
   let out = matrixMultiplication(softMaxOut,value);
   return out;
 }
-function attn(input, weight, bias,n,inNum, outNum, dim,fracBits,sequence_length) {
+function attn(input, weight, bias,weights_attn_final,biases_attn_final,
+            n,inNum, outNum, dim,fracBits,sequence_length) {
   const query_key_value = linear(input, weight, bias,n,inNum, outNum,fracBits);
   const headsAll = splitToHeads(query_key_value,8);
   attnAllHeads = [];
@@ -291,7 +292,6 @@ function attn(input, weight, bias,n,inNum, outNum, dim,fracBits,sequence_length)
     const head = headsAll[i];
     attnAllHeads[i] = attnHead(head,dim,sequence_length);
   }
-  attention
   let attn = [];
   let sizeQKV = getShape(attnAllHeads)[2];
   for(let i =0;i <n;i++){
@@ -302,8 +302,9 @@ function attn(input, weight, bias,n,inNum, outNum, dim,fracBits,sequence_length)
         attn[i][j] = attnAllHeads[headIdx][i][idx];
     }
   }
-
-  return attn;
+ //final attention layer
+ const final_attn = linear(attn,weights_attn_final,biases_attn_final,n,inNum,inNum,fracBits);
+ return final_attn;
 }
 module.exports = {
   attn,

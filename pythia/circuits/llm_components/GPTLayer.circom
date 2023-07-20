@@ -9,6 +9,8 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     //attention weights, bias
     signal input weight[m][p];
     signal input bias[n][p];
+    signal input weight_attn_final[m][m];
+    signal input bias_attn_final[n][m];
     //attention RoPE
     signal input rope_cos[n][attention_dim];
     signal input rope_sin[n][attention_dim];
@@ -41,6 +43,9 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     attn.in_first_layer <== lm_1st_out;
     attn.weights_first_layer <== weight;
     attn.bias_first_layer <== bias;
+    attn.weight_attn_final <== weight_attn_final;
+    attn.bias_attn_final <== bias_attn_final;
+
     attn.rope_cos <== rope_cos;
     attn.rope_sin <== rope_sin;
     attn.mask <== mask;

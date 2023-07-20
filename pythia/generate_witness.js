@@ -133,6 +133,8 @@ describe("main function for generating witness and verifying", function () {
         let input = [];//2D
         let weights = [];//3D
         let biases = [];//3D
+        let weights_attn_final = [];//3D
+        let biases_attn_final = [];//3D
         let weights_mlp_1st=[];//3D;
         let biases_mlp_1st=[];
         let weights_mlp_2nd=[];
@@ -162,6 +164,24 @@ describe("main function for generating witness and verifying", function () {
             biases[l][i] = [];
             for(var j =0;j<p;j++){
               biases[l][i][j] = i+j;
+            }
+          }
+        }
+        for(var l = 0;l<numLayer;l++){
+          weights_attn_final[l] = [];
+          for(var i =0;i<m;i++){
+            weights_attn_final[l][i] = [];
+            for(var j =0;j<m;j++){
+              weights_attn_final[l][i][j] = i+j;
+            }
+          }
+        }
+        for(var l = 0;l<numLayer;l++){
+          biases_attn_final[l] = [];
+          for(var i =0;i<n;i++){
+            biases_attn_final[l][i] = [];
+            for(var j =0;j<m;j++){
+              biases_attn_final[l][i][j] = i+j;
             }
           }
         }
@@ -207,9 +227,9 @@ describe("main function for generating witness and verifying", function () {
         
         
 
-        let pythia_out = pythia(input, weights, biases,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
+        let pythia_out = pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                                 numLayer,mlp_Linear1_size,n,m,p,dim,fracBits,sequence_length);
                                 
-
+          log(pythia_out);
     });
 });

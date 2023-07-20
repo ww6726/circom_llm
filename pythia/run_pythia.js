@@ -74,6 +74,8 @@ describe("main function for building circuit", function () {
          let input = [];//2D
          let weights = [];//3D
          let biases = [];//3D
+         let weights_attn_final = [];//3D
+         let biases_attn_final = [];//3D
          let weights_mlp_1st=[];//3D;
          let biases_mlp_1st=[];
          let weights_mlp_2nd=[];
@@ -106,6 +108,24 @@ describe("main function for building circuit", function () {
              }
            }
          }
+         for(var l = 0;l<numLayer;l++){
+          weights_attn_final[l] = [];
+          for(var i =0;i<m;i++){
+            weights_attn_final[l][i] = [];
+            for(var j =0;j<m;j++){
+              weights_attn_final[l][i][j] = floatToQ(N,fracBits,i+j);
+            }
+          }
+        }
+        for(var l = 0;l<numLayer;l++){
+          biases_attn_final[l] = [];
+          for(var i =0;i<n;i++){
+            biases_attn_final[l][i] = [];
+            for(var j =0;j<m;j++){
+              biases_attn_final[l][i][j] = floatToQ(N,fracBits,i+j);
+            }
+          }
+        }
          //mlp part
          for(var l = 0;l<numLayer;l++){
            weights_mlp_1st[l] = [];
@@ -162,7 +182,7 @@ describe("main function for building circuit", function () {
         let b_neg = Math.floor(1.769*Math.pow(2,fracBits));
         let b = Math.floor(-1.769*Math.pow(2,fracBits));
         let c = Math.floor(1* Math.pow(2,4*fracBits));
-        let pythia_out = await pythia(input, weights, biases,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
+        let pythia_out = await pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                                   ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,
                                   numLayer,mlp_Linear1_size,n,m,p,dim,fracBits);
         log(fieldToReal(pythia_out,fracBits));

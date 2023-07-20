@@ -26,7 +26,7 @@ component main = gptLayer(${n},${m},${p},${attention_dim},${mlp_Linear1_size},${
 }
 
 
-async function gptLayer(input, weight, bias,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,mask,ropeCos,ropeSin,
+async function gptLayer(input, weight, bias,weight_attn_final,bias_attn_final,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,mask,ropeCos,ropeSin,
                     qln2,q_root2_inv,a,b_neg,b,c,a_sm,b_sm,c_sm,n,inNum, outNum,mlp_Linear1_size,dim,fracBits) {
   
 
@@ -38,6 +38,8 @@ async function gptLayer(input, weight, bias,weight_mlp_1,bias_mlp_1,weight_mlp_2
       "in": input,
       "weight": weight,
       "bias": bias,
+      "weight_attn_final": weight_attn_final,
+      "bias_attn_final": bias_attn_final,
 
       "rope_cos": ropeCos,
       "rope_sin": ropeSin,
@@ -62,7 +64,6 @@ async function gptLayer(input, weight, bias,weight_mlp_1,bias_mlp_1,weight_mlp_2
 
 
   }
-  log("hello");
   const witness = await circuit.calculateWitness(INPUT, true);
   var ret = [];
   var idx = 1;

@@ -25,7 +25,7 @@ component main = Pythia(${numLayer},${n},${m},${p},${attention_dim},${mlp_Linear
 }
 
 
-async function pythia(input, weights, biases,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
+async function pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                         ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,
                         numLayer,mlp_Linear1_size,n,m,p,dim,fracBits) {
                     
@@ -37,6 +37,8 @@ async function pythia(input, weights, biases,weights_mlp_1st,biases_mlp_1st,weig
       "in": input,
       "weights": weights,
       "biases": biases,
+      "weights_attn_final": weights_attn_final,
+      "biases_attn_final": biases_attn_final,
 
       "rope_cos": ropeCos,
       "rope_sin": ropeSin,

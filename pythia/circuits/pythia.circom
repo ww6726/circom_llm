@@ -11,6 +11,8 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     //attention weights, bias
     signal input weights[numLayer][m][p];
     signal input biases[numLayer][n][p];
+    signal input weights_attn_final[numLayer][m][m];
+    signal input biases_attn_final[numLayer][n][m];
     //attention RoPE
     signal input rope_cos[n][attention_dim];
     signal input rope_sin[n][attention_dim];
@@ -45,6 +47,10 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits){
         gptLayers[i].in <== gptLayerOutputs[idx];
         gptLayers[i].weight <== weights[i];
         gptLayers[i].bias <== biases[i];
+        gptLayers[i].weight_attn_final <== weights_attn_final[i];
+        gptLayers[i].bias_attn_final <== biases_attn_final[i];
+
+
         gptLayers[i].rope_cos <== rope_cos;
         gptLayers[i].rope_sin <== rope_sin;
         gptLayers[i].mask <== mask;

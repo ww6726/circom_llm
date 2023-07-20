@@ -230,6 +230,8 @@ template attention(n,m,p,dim,fracbits){
     signal input in_first_layer[n][m];
     signal input weights_first_layer[m][p];
     signal input bias_first_layer[n][p];
+    signal input weight_attn_final[m][m];
+    signal input bias_attn_final[n][m];
 
     //witness
     signal input rope_cos[n][dim];
@@ -274,14 +276,21 @@ template attention(n,m,p,dim,fracbits){
         multiHeadAttnOut[head_i] <== attn_head[head_i].out;
     }
     //merge all heads
-    signal output out[n][8*sizeQKV];
+    signal mergedOut[n][8*sizeQKV];
     for(var i =0;i<n;i++){
         for(var j =0;j<8*sizeQKV;j++){
             var headIdx = j \ sizeQKV;
             var idx = j % sizeQKV;
-            out[i][j] <== multiHeadAttnOut[headIdx][i][idx];
+            mergedOut[i][j] <== multiHeadAttnOut[headIdx][i][idx];
         }
     }
+    //final linear layer
+    component linear_final = Linear(n, 8*sizeQKV,8*sizeQKV,fracbits);
+    linear_final.in <== mergedOut;
+    linear_final.weights <== weight_attn_final;
+    linear_final.bias <== bias_attn_final;
+
+    signal output out[n][8*sizeQKV] <== linear_final.out;
 
 }
 

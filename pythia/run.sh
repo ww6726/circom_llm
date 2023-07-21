@@ -1,32 +1,28 @@
 #!/bin/bash
+
+
 #compile the code and generate circuit
-circom circuit.circom --r1cs --wasm --sym --c 
+circom build_circuit/circom_runner/pythia.circom --r1cs --sym --c 
+# circom circuit.circom --r1cs --sym --c 
 
 
 #generate the witness file
-cd circuit_js
+# cd circuit_js
+# cd ..
 #create an input file in circuit_js
 
 
-json_content='{
-  "a": "3"
-}'
-
 # json_content='{
-#   "x": "1",
-#   "y": "1",
-#   "z": "3",
-#   "b": "3",
-#   "q": "1",
-#   "r": "1"
+#   "a": "4",
+#   "b": "32"
 # }'
-echo "$json_content" > input.json
 
-# # auto-generate input for mm
-# node ../generate_input.js
-# cp ../input.json .
-
-node generate_witness.js circuit.wasm input.json witness.wtns
+# echo "$json_content" > input.json
+# auto-generate input for mm
+node generate_input.js
+cp input.json circuit_js
+cd circuit_js
+# node generate_witness.js circuit.wasm input.json witness.wtns
 #enter circuit_cpp and compute the witness; make sure to move input.json here as well
 cd ../circuit_cpp
 make

@@ -18,7 +18,6 @@ const { exit } = require("process");
 function pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                     numLayer,mlp_Linear1_size,n,m,p,dim,fracBits,sequence_length) {
     let gptLayerOut = input;
-    numLayer = 2;
     for(var i=0;i<numLayer;i++){    
         gptLayerOut = gptLayer(gptLayerOut, weights[i], biases[i],weights_attn_final[i],biases_attn_final[i],weights_mlp_1st[i],biases_mlp_1st[i],weights_mlp_2nd[i],biases_mlp_2nd[i],
                                     n,m,p,mlp_Linear1_size,dim,fracBits,sequence_length);

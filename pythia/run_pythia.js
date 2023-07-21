@@ -63,8 +63,8 @@ describe("main function for building circuit", function () {
          let N = 4;// deprecated. Remove this later
 
          let fracBits = 8;
-         let numLayer = 6;
-         let n = 32;
+         let numLayer = 1;
+         let n = 8;
          let m = 32;
          let p = 96;
          let mlp_Linear1_size = 4;
@@ -84,7 +84,7 @@ describe("main function for building circuit", function () {
  
          //initialize all winesses (soon be replaced by real witnesses)
          for(var i =0;i<n;i++){
-           input[i] = []
+           input[i] = [];
            for(var j =0;j<m;j++){
              input[i][j] = floatToQ(N,fracBits,i+j);
            }
@@ -182,10 +182,13 @@ describe("main function for building circuit", function () {
         let b_neg = Math.floor(1.769*Math.pow(2,fracBits));
         let b = Math.floor(-1.769*Math.pow(2,fracBits));
         let c = Math.floor(1* Math.pow(2,4*fracBits));
+      
+        // log(mask,getShape(mask));
         let pythia_out = await pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                                   ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,
                                   numLayer,mlp_Linear1_size,n,m,p,dim,fracBits);
         log(fieldToReal(pythia_out,fracBits));
+        log(getShape(pythia_out));
         log("finished");
  
     });

@@ -36,7 +36,6 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     signal input gelu_b;
     signal input gelu_c;
     //Begin
-    numLayer = 2;
     component gptLayers[numLayer];
     signal gptLayerOutputs[numLayer+1][n][m];
     gptLayerOutputs[0] <== in;
@@ -67,9 +66,9 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits){
         gptLayers[i].gelu_b_neg <== gelu_b_neg;
         gptLayers[i].gelu_b <== gelu_b;
         gptLayers[i].gelu_c <== gelu_c;
-
         idx = idx + 1;
         gptLayerOutputs[idx] <== gptLayers[i].out;
+        
     }
 
     // add final LayerNorm

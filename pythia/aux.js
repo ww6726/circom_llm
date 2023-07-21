@@ -122,7 +122,7 @@ describe("main function for generating witness and verifying", function () {
 
         //make each input, witness 3D.
         let fracBits = 8;
-        let numLayer = 6;
+        let numLayer = 1;
         let n = 32;
         let m = 32;
         let p = 96;

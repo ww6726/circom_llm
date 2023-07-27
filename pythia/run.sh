@@ -2,8 +2,8 @@
 
 
 #compile the code and generate circuit
-circom build_circuit/circom_runner/pythia.circom --r1cs --sym --c 
-# circom circuit.circom --r1cs --sym --c 
+# circom build_circuit/circom_runner/pythia.circom --r1cs --wasm --sym --c 
+circom circuit.circom --r1cs --sym --c 
 
 
 #generate the witness file
@@ -12,14 +12,14 @@ circom build_circuit/circom_runner/pythia.circom --r1cs --sym --c
 #create an input file in circuit_js
 
 
-# json_content='{
-#   "a": "4",
-#   "b": "32"
-# }'
+json_content='{
+  "a": "4",
+  "b": "32"
+}'
 
-# echo "$json_content" > input.json
+echo "$json_content" > input.json
 # auto-generate input for mm
-node generate_input.js
+# node generate_input.js
 cp input.json circuit_js
 cd circuit_js
 # node generate_witness.js circuit.wasm input.json witness.wtns
@@ -53,7 +53,7 @@ snarkjs groth16 verify verification_key.json public.json proof.json
 rm ../*.r1cs
 rm ../*.sym
 cd ..
-rm -rf circom_js/
-rm -rf circom_cpp/
+rm -rf circuit_js/
+rm -rf circuit_cpp/
 
 

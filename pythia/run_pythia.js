@@ -63,11 +63,11 @@ describe("main function for building circuit", function () {
          let N = 4;// deprecated. Remove this later
 
          let fracBits = 8;
-         let numLayer = 1;
-         let n = 8;
+         let numLayer = 6;
+         let n = 32;
          let m = 32;
          let p = 96;
-         let mlp_Linear1_size = 4;
+         let mlp_Linear1_size = 4*m;
  
          let dim = 2;
          //weights, biases 

@@ -9,6 +9,7 @@ include "circuits/util/min.circom";
 
 include "circuits/circomlib/comparators.circom";
 include "circuits/matrix/concat.circom";
+include "circuits/pythia.circom";
 /*
     This code is a playground to test circuit correctness for numerous operations.
     Every computation needs to work here first prior being put into larger circuits.
@@ -212,4 +213,12 @@ template multi_concat_test(){
     signal output out <== 2;
 
 }   
- component main = multi_concat_test();       
+template small(){
+    signal input a;
+    signal input b;
+    signal output out <== a*b;
+}
+component main = small();
+
+// component main = Pythia(6,32,32,96,2,128,8);
+//  component main = multi_concat_test();       

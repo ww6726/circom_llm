@@ -12,14 +12,14 @@ circom circuit.circom --r1cs --sym --c
 #create an input file in circuit_js
 
 
-json_content='{
-  "a": "4",
-  "b": "32"
-}'
+# json_content='{
+#   "a": "4",
+#   "b": "32"
+# }'
 
 echo "$json_content" > input.json
 # auto-generate input for mm
-# node generate_input.js
+node generate_matrix.js
 cp input.json circuit_js
 cd circuit_js
 # node generate_witness.js circuit.wasm input.json witness.wtns

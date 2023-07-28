@@ -218,7 +218,15 @@ template small(){
     signal input b;
     signal output out <== a*b;
 }
-component main = small();
+template matmultest(n,m,p,fracBits){
+    signal input a[n][m];
+    signal input b[m][p];
+    component mm = matmul(n,m,p,fracBits);
+    mm.a <== a;
+    mm.b <== b;
+    signal output out[n][p] <== mm.c;
+}
+component main = matmultest(4,4,4,8);
 
 // component main = Pythia(6,32,32,96,2,128,8);
 //  component main = multi_concat_test();       

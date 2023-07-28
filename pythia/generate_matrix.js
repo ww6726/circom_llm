@@ -28,9 +28,10 @@ function getShape(data) {
 let N = 4;// deprecated. Remove this later
 
   let fracBits = 8;
-  let n = 4;
-  let m = 4;
-  let p = 4;
+  let same = 10;
+  let n = same;
+  let m = same;
+  let p = same;
 
 //matrices
   let a = [];

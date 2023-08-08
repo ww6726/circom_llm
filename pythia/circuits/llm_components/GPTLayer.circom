@@ -37,6 +37,12 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead){
     signal input initialLinearLayerMMOut[n][p];
     signal input keyQueryMM[numHead][n][n];
     signal input keyQueryMM_aux[numHead][n][n];
+    var softmaxValue_aux_dim = p/numHead;
+    softmaxValue_aux_dim = softmaxValue_aux_dim/3;
+    signal input softmaxValue_aux[numHead][n][softmaxValue_aux_dim];
+    signal input finalLinearLayer_aux[n][softmaxValue_aux_dim*numHead];
+    signal input mlp_first_aux[n][mlp_Linear1_size];
+    signal input mlp_second_aux[n][softmaxValue_aux_dim*numHead];
 
 
     //1st LayerNorm layer
@@ -58,25 +64,30 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead){
     attn.a_sm <== a_sm;
     attn.b_sm <== b_sm;
     attn.c_sm <== c_sm;
+
     //freivalds
     attn.initialLinearLayerMMOut <== initialLinearLayerMMOut;
     attn.keyQueryMM <== keyQueryMM;
     attn.keyQueryMM_aux <== keyQueryMM_aux;
+    attn.softmaxValue_aux <== softmaxValue_aux;
+    attn.finalLinearLayer_aux <== finalLinearLayer_aux;
 
-    signal attn_out[n][m] <== attn.out;//this is also needed in residual connection
+    
+
+    signal attn_out[n][softmaxValue_aux_dim*numHead] <== attn.out;//this is also needed in residual connection
 
 
 
     //2nd LayerNorm layer
-    component lm_2nd = LayerNorm(n,m,fracBits);
+    component lm_2nd = LayerNorm(n,softmaxValue_aux_dim*numHead,fracBits);
     lm_2nd.in <== attn_out;
-    signal lm_2nd_out[n][m] <== lm_2nd.out;
+    signal lm_2nd_out[n][softmaxValue_aux_dim*numHead] <== lm_2nd.out;
 
 
 
 
     // MLP Layer
-    component mlp = MLP(n,m,mlp_Linear1_size,fracBits);
+    component mlp = MLP(n,softmaxValue_aux_dim*numHead,mlp_Linear1_size,fracBits);
     mlp.in <== lm_2nd_out;
     mlp.weight1 <== weight_mlp_1;
     mlp.bias1 <== bias_mlp_1;
@@ -87,6 +98,10 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead){
     mlp.gelu_c <== gelu_c;
     mlp.weight2 <== weight_mlp_2;
     mlp.bias2 <== bias_mlp_2;
+
+    //freivalds
+    mlp.mlp_first_aux <== mlp_first_aux;
+    mlp.mlp_second_aux <== mlp_second_aux;
 
     //add residual layer
     component residual = matEleSumTwo(n,m);

@@ -9,6 +9,15 @@ function readWitness(filename) {
   const matrix = lines.map(line => line.split(' ').map(Number));
   return matrix;
 }
+  async function read3DWitness(filePath) {
+    try {
+      const data = await fs.promises.readFile(filePath, 'utf8');
+      const parsedData = JSON.parse(data);
+      return parsedData;
+    } catch (err) {
+      throw err;
+    }
+  }
 function getShape(data) {
   if (Array.isArray(data)) {
     var shape = [];
@@ -137,6 +146,22 @@ const ropeSin = floatToQ_matrix(N,fracBits,readWitness(ROPE_SIN_FILE));
 const MASK_FILE = "witness/mask.txt";
 const mask = floatToQ_matrix(N,fracBits,readWitness(MASK_FILE));
 
+  //witness for Freidvalds
+  const initialLinearLayerMMOut_file = "witness/initialLinearLayerMMOut.txt";
+  let initialLinearLayerMMOut = await read3DWitness(initialLinearLayerMMOut_file);
+  const keyQueryMM_file = "witness/keyQueryMM.txt";
+  let keyQueryMM = await read3DWitness(keyQueryMM_file);
+  const keyQueryMM_aux_file = "witness/keyQueryMM_aux.txt";
+  let keyQueryMM_aux = await read3DWitness(keyQueryMM_aux_file);
+  const softmaxValue_aux_file = "witness/softmaxValue_aux.txt";
+  let softmaxValue_aux = await read3DWitness(softmaxValue_aux_file);
+  const finalLinearLayer_aux_file = "witness/finalLinearLayer_aux.txt";
+  let finalLinearLayer_aux = await read3DWitness(finalLinearLayer_aux_file);
+  const mlp_first_aux_file = "witness/mlp_first_aux.txt";
+  let mlp_first_aux = await read3DWitness(mlp_first_aux_file);
+  const mlp_second_aux_file = "witness/mlp_second_aux.txt";
+  let mlp_second_aux = await read3DWitness(mlp_second_aux_file);
+
 log(getShape(ropeCos));
 //softmax
 let qln2 = floatToQ(4,fracBits,Math.log(2));
@@ -177,7 +202,18 @@ const INPUT = {
   gelu_b_neg: b_neg,
   gelu_b: b,
   gelu_c: c,
+
+
+  initialLinearLayerMMOut: initialLinearLayerMMOut,
+  keyQueryMM: keyQueryMM,
+  keyQueryMM_aux: keyQueryMM_aux,
+  softmaxValue_aux: softmaxValue_aux,
+  finalLinearLayer_aux: finalLinearLayer_aux,
+  mlp_first_aux:mlp_first_aux,
+  mlp_second_aux :mlp_second_aux,
+
 }
+
 
 // //test
 // let d1 = [];

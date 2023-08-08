@@ -273,6 +273,7 @@ template freidvalds_matmult(n,m,p,fracBits){
 }
 
 // component main = freidvalds_matmult(64,64,64,8);
-component main = freidvalds_matmult(32,32,32,8);
+// component main = freidvalds_matmult(32,32,32,8);
 // component main = Pythia(1,32,32,96,2,4,8);
+component main = Pythia(6,32,32,96,2,4,8,8);
 //  component main = multi_concat_test();       

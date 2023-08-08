@@ -41,22 +41,33 @@ function pythia(input, weights, biases,weights_attn_final,biases_attn_final,weig
     let gptLayerOut = input;
     //store witness for freidvalds
     let initialLinearLayerMMOut = [];
-    keyQueryMM = [];keyQueryMM_aux = [];
+    keyQueryMM = [];keyQueryMM_aux = [];softmaxValue_aux = []; finalLinearLayer_aux=[];
+    mlp_first_aux = [];mlp_second_aux = [];
     for(var i=0;i<numLayer;i++){
         gptLayerOut = gptLayer(gptLayerOut, weights[i], biases[i],weights_attn_final[i],biases_attn_final[i],weights_mlp_1st[i],biases_mlp_1st[i],weights_mlp_2nd[i],biases_mlp_2nd[i],
                                     ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,                          
                                     n,m,p,mlp_Linear1_size,dim,fracBits,sequence_length,numHead,
-                                    i,initialLinearLayerMMOut,keyQueryMM,keyQueryMM_aux);
+                                    i,initialLinearLayerMMOut,keyQueryMM,keyQueryMM_aux,softmaxValue_aux,finalLinearLayer_aux,mlp_first_aux,mlp_second_aux);
     }  
     // log(keyQueryMM[0][0]);
     // exit();
     const witness_initialLinearLayerMMOut = 'witness/initialLinearLayerMMOut.txt';
     save3DWitnessToFile(initialLinearLayerMMOut, witness_initialLinearLayerMMOut);
-
+    //attn mlp
     const witness_keyQueryMM = 'witness/keyQueryMM.txt';
     save3DWitnessToFile(keyQueryMM, witness_keyQueryMM);
     const witness_keyQueryMM_aux = 'witness/keyQueryMM_aux.txt';
     save3DWitnessToFile(keyQueryMM_aux, witness_keyQueryMM_aux);
+    const witness_softmaxValue_aux = 'witness/softmaxValue_aux.txt';
+    save3DWitnessToFile(softmaxValue_aux, witness_softmaxValue_aux);
+    const witness_finalLinearLayer_aux = 'witness/finalLinearLayer_aux.txt';
+    save3DWitnessToFile(finalLinearLayer_aux, witness_finalLinearLayer_aux);
+    //freivalds mlp
+    const witness_mlp_1st_aux = 'witness/mlp_first_aux.txt';
+    save3DWitnessToFile(mlp_first_aux, witness_mlp_1st_aux);
+    const witness_mlp_2nd_aux = 'witness/mlp_second_aux.txt';
+    save3DWitnessToFile(mlp_second_aux, witness_mlp_2nd_aux);
+
 
     // final layerNorm 
     let out = I_layerNorm2D(gptLayerOut,fracBits);

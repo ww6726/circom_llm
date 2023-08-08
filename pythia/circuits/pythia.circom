@@ -7,7 +7,7 @@ include "llm_components/attention.circom";
 include "llm_components/GPTLayer.circom";
 
 template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead){
-
+    
      signal input in[n][m];
     //attention weights, bias
     signal input weights[numLayer][m][p];
@@ -40,6 +40,13 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead){
     signal input initialLinearLayerMMOut[numLayer][n][p];
     signal input keyQueryMM[numLayer][numHead][n][n];
     signal input keyQueryMM_aux[numLayer][numHead][n][n];
+    var softmaxValue_aux_dim = p/numHead;
+    softmaxValue_aux_dim = softmaxValue_aux_dim/3;
+    signal input softmaxValue_aux[numLayer][numHead][n][softmaxValue_aux_dim];
+    signal input finalLinearLayer_aux[numLayer][n][softmaxValue_aux_dim*numHead];
+
+    signal input mlp_first_aux[numLayer][n][mlp_Linear1_size];
+    signal input mlp_second_aux[numLayer][n][softmaxValue_aux_dim*numHead];
 
 
     //Begin
@@ -77,6 +84,11 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead){
         gptLayers[i].initialLinearLayerMMOut <== initialLinearLayerMMOut[i];
         gptLayers[i].keyQueryMM <== keyQueryMM[i];
         gptLayers[i].keyQueryMM_aux <== keyQueryMM_aux[i];
+        gptLayers[i].softmaxValue_aux <== softmaxValue_aux[i];
+        gptLayers[i].finalLinearLayer_aux <== finalLinearLayer_aux[i];
+        gptLayers[i].mlp_first_aux <== mlp_first_aux[i];
+        gptLayers[i].mlp_second_aux <== mlp_second_aux[i];
+
 
         idx = idx + 1;
         gptLayerOutputs[idx] <== gptLayers[i].out;

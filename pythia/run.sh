@@ -22,8 +22,8 @@ echo "Circuit evaluation time: ${circuit_eval_time} seconds"
 
 # echo "$json_content" > input.json
 # auto-generate input for mm
-node generate_matrix.js
-# node generate_input.js
+# node generate_matrix.js
+node generate_input.js
 
 # cp input.json circuit_js
 # cd circuit_js

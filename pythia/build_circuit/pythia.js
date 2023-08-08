@@ -29,7 +29,7 @@ component main = Pythia(${numLayer},${n},${m},${p},${attention_dim},${mlp_Linear
 async function pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                         ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,
                         numLayer,mlp_Linear1_size,n,m,p,dim,fracBits,numHead,
-                        initialLinearLayerMMOut,keyQueryMM,keyQueryMM_aux) {
+                        initialLinearLayerMMOut,keyQueryMM,keyQueryMM_aux,softmaxValue_aux,finalLinearLayer_aux,mlp_first_aux,mlp_second_aux) {
 
 
   let circuit;
@@ -66,6 +66,11 @@ async function pythia(input, weights, biases,weights_attn_final,biases_attn_fina
       "initialLinearLayerMMOut" : initialLinearLayerMMOut,
       "keyQueryMM" : keyQueryMM,
       "keyQueryMM_aux": keyQueryMM_aux,
+      "softmaxValue_aux": softmaxValue_aux,
+      "finalLinearLayer_aux": finalLinearLayer_aux,
+      "mlp_first_aux":mlp_first_aux,
+      "mlp_second_aux":mlp_second_aux,
+
   }
   const witness = await circuit.calculateWitness(INPUT, true);
   var ret = [];

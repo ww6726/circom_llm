@@ -73,7 +73,7 @@ describe("main function for building circuit", function () {
          let N = 4;// deprecated. Remove this later
 
          let fracBits = 8;
-         let numLayer = 1;
+         let numLayer = 6;
          let numHead = 8;
          let n = 32;
          let m = 32;
@@ -190,7 +190,15 @@ describe("main function for building circuit", function () {
          let keyQueryMM = await read3DWitness(keyQueryMM_file);
          const keyQueryMM_aux_file = "witness/keyQueryMM_aux.txt";
          let keyQueryMM_aux = await read3DWitness(keyQueryMM_aux_file);
-         
+         const softmaxValue_aux_file = "witness/softmaxValue_aux.txt";
+         let softmaxValue_aux = await read3DWitness(softmaxValue_aux_file);
+         const finalLinearLayer_aux_file = "witness/finalLinearLayer_aux.txt";
+         let finalLinearLayer_aux = await read3DWitness(finalLinearLayer_aux_file);
+         const mlp_first_aux_file = "witness/mlp_first_aux.txt";
+         let mlp_first_aux = await read3DWitness(mlp_first_aux_file);
+         const mlp_second_aux_file = "witness/mlp_second_aux.txt";
+         let mlp_second_aux = await read3DWitness(mlp_second_aux_file);
+ 
         //softmax
         let qln2 = floatToQ(4,fracBits,Math.log(2));
         let a_sm = floatToQ(4,2*fracBits,0.3585);
@@ -208,7 +216,7 @@ describe("main function for building circuit", function () {
         let pythia_out = await pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                                   ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,
                                   numLayer,mlp_Linear1_size,n,m,p,dim,fracBits,numHead,
-                                  initialLinearLayerMMOut,keyQueryMM,keyQueryMM_aux);
+                                  initialLinearLayerMMOut,keyQueryMM,keyQueryMM_aux,softmaxValue_aux,finalLinearLayer_aux,mlp_first_aux,mlp_second_aux);
         // log(fieldToReal(pythia_out,fracBits));
         // log(getShape(pythia_out));
         log("finished");

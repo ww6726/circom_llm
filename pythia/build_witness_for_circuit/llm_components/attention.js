@@ -66,7 +66,7 @@ function freivalds(a,b,c,fracBits){
       rand[i][j] = 1;
     }
   }
-  let c_ = matrixMultiplication(a,b);
+  let c_ = matmulTruncate(a,b,fracBits);
 
   let lhs = matrixMultiplication(b,rand,fracBits);
   lhs = matrixMultiplication(a,lhs,fracBits);
@@ -289,7 +289,7 @@ function computeROPE(dim, max_position_embedding){
 
 function attnHead(head,dim,sequence_length,fracBits,head_idx,
                   ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,
-                  keyQueryMM_head,keyQueryMM_head_aux){
+                  keyQueryMM_head,keyQueryMM_head_aux,softmaxValue_aux){
     
   const q_k_v =  splitQKV(head);
   var query = q_k_v[0];
@@ -320,11 +320,6 @@ function attnHead(head,dim,sequence_length,fracBits,head_idx,
   var queryKT_aux = matrixMultiplication(query,keyT);
 
   //test freivalds algorithm
-
-
-  // log(queryKT);
-  
-
   keyQueryMM_head[head_idx] = queryKT;
   keyQueryMM_head_aux[head_idx] = queryKT_aux;
 
@@ -340,14 +335,17 @@ function attnHead(head,dim,sequence_length,fracBits,head_idx,
 
   //multiply V
   let out = matmulTruncate(softMaxOut,value,fracBits);
+  //freivalds
+  let out_aux = matrixMultiplication(softMaxOut,value);
+  softmaxValue_aux[head_idx] = out_aux;
+
   return out;
 }
 function attn(input, weight, bias,weights_attn_final,biases_attn_final,n,inNum, outNum, dim, fracBits,sequence_length,numHead,
               ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,
-              layerID,initialLinearLayerMMOuts,keyQueryMM,keyQueryMM_aux) {
+              layerID,initialLinearLayerMMOuts,keyQueryMM,keyQueryMM_aux,softmaxValue_aux,finalLinearLayer_aux) {
   // const query_key_value = linear(input, weight, bias,n,inNum, outNum,fracBits);
   let query_key_value = matmulTruncate(input,weight,fracBits);
-  log(n,inNum,outNum);
 
   //save for Freidvalds
   initialLinearLayerMMOuts[layerID] = query_key_value;
@@ -357,16 +355,17 @@ function attn(input, weight, bias,weights_attn_final,biases_attn_final,n,inNum, 
   attnAllHeads = [];
   let keyQueryMM_head = [];
   let keyQueryMM_head_aux = [];
+  let softmaxValue_head_aux = [];
 
   for(let i = 0;i < numHead;i++){
     const head = headsAll[i];
     attnAllHeads[i] = attnHead(head,dim,sequence_length,fracBits,i,
                               ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,
-                              keyQueryMM_head,keyQueryMM_head_aux);
+                              keyQueryMM_head,keyQueryMM_head_aux,softmaxValue_head_aux);
   }
   keyQueryMM[layerID] = keyQueryMM_head;
   keyQueryMM_aux[layerID] = keyQueryMM_head_aux;
-
+  softmaxValue_aux[layerID] = softmaxValue_head_aux;
 
   let attn = [];
   let sizeQKV = getShape(attnAllHeads)[2];
@@ -381,6 +380,9 @@ function attn(input, weight, bias,weights_attn_final,biases_attn_final,n,inNum, 
  //final attention layer
 //  let final_attn = linear(attn,weights_attn_final,biases_attn_final,n,inNum,inNum,fracBits);
   let final_attn = matmulTruncate(attn,weights_attn_final,fracBits);
+  let final_attn_aux = matrixMultiplication(attn,weights_attn_final);
+  finalLinearLayer_aux[layerID] = final_attn_aux;
+
   final_attn = addBias(final_attn,biases_attn_final);
 
   return final_attn;

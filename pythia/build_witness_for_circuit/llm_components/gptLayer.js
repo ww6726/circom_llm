@@ -25,17 +25,17 @@ const { exitProcess } = require("yargs");
 function gptLayer(input, weight, bias,weights_attn_final,biases_attn_final,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,
                     ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,
                     n,inNum, outNum,mlp_Linear1_size,dim,fracBits,sequence_length,numHead,
-                    layerID,initialLinearLayerMMOuts,keyQueryMM,keyQueryMM_aux) {
+                    layerID,initialLinearLayerMMOuts,keyQueryMM,keyQueryMM_aux,softmaxValue_aux,finalLinearLayer_aux,mlp_first_aux,mlp_second_aux) {
     let ln_out_first = I_layerNorm2D(input,fracBits);
     let attention = attn(ln_out_first, weight, bias,weights_attn_final,biases_attn_final,n,inNum, outNum, dim, fracBits,sequence_length,numHead,
                     ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,
-                    layerID,initialLinearLayerMMOuts,keyQueryMM,keyQueryMM_aux);
+                    layerID,initialLinearLayerMMOuts,keyQueryMM,keyQueryMM_aux,softmaxValue_aux,finalLinearLayer_aux);
     // log(attention);
     // exit();                
 
     let ln_out = I_layerNorm2D(attention,fracBits);
     let mlp_out = mlp(ln_out,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,n,inNum,mlp_Linear1_size,fracBits,
-                        q_root2_inv,a,b_neg,b,c,);
+                        layerID,mlp_first_aux,mlp_second_aux);
     
     //residual layer
     let gptLayer_out = elementwiseAdd(attention,mlp_out);

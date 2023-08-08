@@ -121,6 +121,8 @@ template addRoPE(n, dim,fracbits){
  
 }
 template attention_single_head(n,headSize,dim,fracBits){
+    var sizeQKV = headSize/3;
+
     signal input head[n][headSize];
     //witness
     signal input rope_cos[n][dim];
@@ -135,12 +137,12 @@ template attention_single_head(n,headSize,dim,fracBits){
     //freivalds
     signal input keyQueryMM[n][n];//deprecated
     signal input keyQueryMM_aux[n][n];//original for freivalds
+    signal input softmaxValue_aux[n][sizeQKV];//original for freivalds
 
 
 
     component splitQKV = Split(n,headSize,3);
     splitQKV.in <== head;
-    var sizeQKV = headSize/3;
     //split into key, query, and value
     signal q_k_v[3][n][sizeQKV] <== splitQKV.out;
     signal query[n][sizeQKV] <== q_k_v[0];
@@ -250,12 +252,20 @@ template attention_single_head(n,headSize,dim,fracBits){
     signal softmax_out[n][n] <== sm.out;
   
 
-    //multiply with V
-    component mm = matmul(n,n,sizeQKV,fracBits);
-    mm.a <== softmax_out;
-    mm.b <== value;
-    
-    signal output out[n][sizeQKV] <== mm.c;
+    // //multiply with V
+    // component mm = matmul(n,n,sizeQKV,fracBits);
+    // mm.a <== softmax_out;
+    // mm.b <== value;
+
+    //freivalds multiply with V
+    component fv_softmaxV = FreivaldsWithUntruncatedResult(n,n,sizeQKV,fracBits);
+    fv_softmaxV.a <== softmax_out;
+    fv_softmaxV.b <== value;
+    fv_softmaxV.c <== softmaxValue_aux;
+    signal output out[n][sizeQKV] <== fv_softmaxV.out;
+
+
+    // signal output out[n][sizeQKV] <== mm.c;
 
 }
 template attention(n,m,p,dim,fracbits,numHead){
@@ -280,6 +290,10 @@ template attention(n,m,p,dim,fracbits,numHead){
     signal input initialLinearLayerMMOut[n][p];
     signal input keyQueryMM[numHead][n][n];
     signal input keyQueryMM_aux[numHead][n][n];
+    var softmaxValue_aux_dim = p/numHead;
+    softmaxValue_aux_dim = softmaxValue_aux_dim/3;
+    signal input softmaxValue_aux[numHead][n][softmaxValue_aux_dim];
+    signal input finalLinearLayer_aux[n][softmaxValue_aux_dim*numHead];
 
     // //old
     // component linear_qkv = Linear(n,m,p,fracbits);
@@ -324,6 +338,7 @@ template attention(n,m,p,dim,fracbits,numHead){
         //freivalds
         attn_head[head_i].keyQueryMM <== keyQueryMM[head_i];
         attn_head[head_i].keyQueryMM_aux <== keyQueryMM_aux[head_i];
+        attn_head[head_i].softmaxValue_aux <== softmaxValue_aux[head_i];
 
         multiHeadAttnOut[head_i] <== attn_head[head_i].out;
     }
@@ -336,13 +351,22 @@ template attention(n,m,p,dim,fracbits,numHead){
             mergedOut[i][j] <== multiHeadAttnOut[headIdx][i][idx];
         }
     }
-    //final linear layer
-    component linear_final = Linear(n, numHead*sizeQKV,numHead*sizeQKV,fracbits);
-    linear_final.in <== mergedOut;
-    linear_final.weights <== weight_attn_final;
-    linear_final.bias <== bias_attn_final;
+    // //OLD final linear layer
+    // component linear_final = Linear(n, numHead*sizeQKV,numHead*sizeQKV,fracbits);
+    // linear_final.in <== mergedOut;
+    // linear_final.weights <== weight_attn_final;
+    // linear_final.bias <== bias_attn_final;
 
-    signal output out[n][numHead*sizeQKV] <== linear_final.out;
+    //NEW freivalds
+    component fv_finalLinearLayer = FreivaldsWithUntruncatedResult(n,numHead*sizeQKV,numHead*sizeQKV,fracbits);
+    fv_finalLinearLayer.a <== mergedOut;
+    fv_finalLinearLayer.b <== weight_attn_final;
+    fv_finalLinearLayer.c <== finalLinearLayer_aux;
+    
+    component addBias_finalLinearLayer = matEleSumTwo(n,numHead*sizeQKV);
+    addBias_finalLinearLayer.a <== fv_finalLinearLayer.out;
+    addBias_finalLinearLayer.b <== bias_attn_final;
+    signal output out[n][numHead*sizeQKV] <== addBias_finalLinearLayer.out;
 
 }
 

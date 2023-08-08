@@ -16,15 +16,20 @@ const fs = require('fs');
 const { exit } = require("process");
 
 
-function mlp(input,weight1,bias1,weight2,bias2,n,p,m,fracBits){
-    // let linear1_out  = linear(input, weight1, bias1, n, p, m, fracBits);
+function mlp(input,weight1,bias1,weight2,bias2,n,p,m,fracBits,
+              layer_ID, mlp_first_aux,mlp_second_aux){
     let linear1_out = matmulTruncate(input,weight1,fracBits);
     linear1_out = addBias(linear1_out,bias1);
+    mlp_first_aux[layer_ID] = matrixMultiplication(input,weight1);
+    
     let gelu_out = gelu_i_2d(linear1_out,fracBits);
-    let linear2_out = linear(gelu_out, weight2, bias2, n, p, m, fracBits);
+    
+    let linear2_out = matmulTruncate(gelu_out, weight2,fracBits);
+    mlp_second_aux[layer_ID] = matrixMultiplication(gelu_out,weight2);
+    linear2_out = addBias(linear2_out,bias2);
+
     return linear2_out;
 }
-  module.exports = {
-    mlp,
-  };
-  
+module.exports = {
+  mlp,
+};

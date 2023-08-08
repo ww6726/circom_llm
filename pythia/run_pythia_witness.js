@@ -73,7 +73,7 @@ describe("main function for building circuit", function () {
          let N = 4;// deprecated. Remove this later
 
          let fracBits = 8;
-         let numLayer = 1;
+         let numLayer = 6;
          let numHead = 8;
          let n = 32;
          let m = 32;
@@ -185,7 +185,8 @@ describe("main function for building circuit", function () {
 
          //witness for Freidvalds
          const initialLinearLayerMMOut = "witness/initialLinearLayerMMOut.txt";
-
+         log(getShape(ropeCos));
+         exit()
         //softmax
         let qln2 = floatToQ(4,fracBits,Math.log(2));
         let a_sm = floatToQ(4,2*fracBits,0.3585);

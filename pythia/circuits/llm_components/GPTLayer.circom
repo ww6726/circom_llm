@@ -4,7 +4,7 @@ include "../llm_components/mlp.circom";
 include "../ml_components/LayerNorm.circom";
 include "../matrix/matEleSum.circom";
 
-template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
+template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead){
     signal input in[n][m];
     //attention weights, bias
     signal input weight[m][p];
@@ -33,13 +33,18 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     signal input gelu_b_neg;
     signal input gelu_b;
     signal input gelu_c;
-    
+    //freivalds
+    signal input initialLinearLayerMMOut[n][p];
+    signal input keyQueryMM[numHead][n][n];
+    signal input keyQueryMM_aux[numHead][n][n];
+
+
     //1st LayerNorm layer
     component lm_1st = LayerNorm(n,m,fracBits);
     lm_1st.in <== in;
     signal lm_1st_out[n][m] <== lm_1st.out;
     //attention layer
-    component attn =  attention(n,m,p,attention_dim,fracBits);
+    component attn =  attention(n,m,p,attention_dim,fracBits,numHead);
     attn.in_first_layer <== lm_1st_out;
     attn.weights_first_layer <== weight;
     attn.bias_first_layer <== bias;
@@ -53,13 +58,22 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     attn.a_sm <== a_sm;
     attn.b_sm <== b_sm;
     attn.c_sm <== c_sm;
+    //freivalds
+    attn.initialLinearLayerMMOut <== initialLinearLayerMMOut;
+    attn.keyQueryMM <== keyQueryMM;
+    attn.keyQueryMM_aux <== keyQueryMM_aux;
 
     signal attn_out[n][m] <== attn.out;//this is also needed in residual connection
 
+
+
     //2nd LayerNorm layer
     component lm_2nd = LayerNorm(n,m,fracBits);
-    lm_2nd.in <== in;
+    lm_2nd.in <== attn_out;
     signal lm_2nd_out[n][m] <== lm_2nd.out;
+
+
+
 
     // MLP Layer
     component mlp = MLP(n,m,mlp_Linear1_size,fracBits);
@@ -80,5 +94,7 @@ template gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     residual.b <== mlp.out;
 
     signal output out[n][m] <== residual.out;
+
+     
 
 }

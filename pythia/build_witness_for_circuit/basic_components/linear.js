@@ -8,7 +8,7 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {getShape,truncate} = require('../basic_components/util');
+const {getShape,truncate,fieldToReal,matmulTruncate} = require('../basic_components/util');
 
 const fs = require('fs');
 const { exit } = require("process");
@@ -42,7 +42,7 @@ function matrixMultiplication(matrixA, matrixB) {
       throw new Error("Matrix dimensions must match for element-wise addition.");
     }
   
-    const result = new Array(rows);
+    const result = [new Array(rows)];
     for (let i = 0; i < rows; i++) {
       result[i] = new Array(columns);
       for (let j = 0; j < columns; j++) {
@@ -56,8 +56,8 @@ function matrixMultiplication(matrixA, matrixB) {
   
   // [n][inNum] * [inNum][outNum] = [n][outNum]
 function linear(input, weight, bias, n, inNum, outNum, fracBits) {
-
-    let ret = addBias(matrixMultiplication(input,weight),bias);
+    let ret = matmulTruncate(input,weight,fracBits);
+    ret = addBias(ret,bias);
 
     return ret;
 }

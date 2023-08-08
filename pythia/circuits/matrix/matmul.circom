@@ -35,7 +35,6 @@ template matmul(m,n,p,fracbits){
             trun[i][j] = truncate(bitsTotal,bitsTotal-fracbits);
             trun[i][j].in <== temp[i][j];
             c[i][j] <== trun[i][j].out;
-
         }
     }
 }

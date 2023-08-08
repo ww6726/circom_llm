@@ -8,20 +8,19 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {getShape,floatToQ,QToFloat,floatToQ_signed, fieldToReal} = require('../basic_components/util');
-const {matrixMultiplication,linear} = require('../basic_components/linear');
-const {gelu_,gelu2D} = require('../llm_components/gelu');
+const {getShape,floatToQ,QToFloat,floatToQ_signed,matmulTruncate,fieldToReal} = require('../basic_components/util');
+const {matrixMultiplication,linear, addBias} = require('../basic_components/linear');
+const {gelu_,gelu2D,gelu_i_2d} = require('../llm_components/gelu');
 
 const fs = require('fs');
 const { exit } = require("process");
 
 
 function mlp(input,weight1,bias1,weight2,bias2,n,p,m,fracBits){
-    let linear1_out  = linear(input, weight1, bias1, n, p, m, fracBits);
-
-    let gelu_out = gelu2D(linear1_out);
-    log((gelu_out));
-    exit();
+    // let linear1_out  = linear(input, weight1, bias1, n, p, m, fracBits);
+    let linear1_out = matmulTruncate(input,weight1,fracBits);
+    linear1_out = addBias(linear1_out,bias1);
+    let gelu_out = gelu_i_2d(linear1_out,fracBits);
     let linear2_out = linear(gelu_out, weight2, bias2, n, p, m, fracBits);
     return linear2_out;
 }

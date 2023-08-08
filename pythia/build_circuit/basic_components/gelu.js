@@ -11,15 +11,16 @@ const assert = chai.assert;
 const {floatToQ,getShape} = require('util');
 const fs = require('fs');
 
-function generateCircomFile(n,fracBits) {
+function generateCircomFile(n,m,fracBits) {
     const content = `pragma circom 2.0.0;
   include "../../circuits/ml_components/GeLU.circom";
   
-  component main = Gelu1D(${n},${fracBits});`;
+  component main = Gelu2D(${n},${m},${fracBits});`;
     fs.writeFileSync(path.join(__dirname, "../circom_runner", "gelu.circom"), content);
 }
 async function gelu(input,fracBits) {
     let n = input.length;
+    let m = input[0].length;
     let q_root2_inv = Math.floor((1/Math.sqrt(2))*Math.pow(2,fracBits));  
 
     let a = Math.floor(-0.2888*Math.pow(2,2*fracBits));
@@ -27,7 +28,7 @@ async function gelu(input,fracBits) {
     let b = Math.floor(-1.769*Math.pow(2,fracBits));
     let c = Math.floor(1* Math.pow(2,4*fracBits));
 
-    generateCircomFile(n,fracBits);
+    generateCircomFile(n,m,fracBits);
     let circuit;
     circuit = await wasm_tester(path.join(__dirname, "../circom_runner", "gelu.circom"));
     const INPUT = {

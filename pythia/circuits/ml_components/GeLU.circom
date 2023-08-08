@@ -52,7 +52,6 @@ template Gelu(fracBits){
     component trunc = truncate(96,96 - fracBits);
     trunc.in <== L_in_temp;
     signal L_in <== trunc.out;
-
     component li = L_i(fracBits);
     li.x <== L_in;
     li.a <== gelu_a;
@@ -65,6 +64,7 @@ template Gelu(fracBits){
     signal L_out_4_time_fracBits <== li.out;
     component trunc2 = truncate(96,96 - 3*fracBits);
     trunc2.in <== L_out_4_time_fracBits;
+    signal L_out <== trunc2.out;
 
     component po2 = powOfTwo(64);
     po2.in <== fracBits;

@@ -6,7 +6,6 @@ template matEleMul(m,n){
     signal input b[m][n];
     signal output out[m][n];
 
-    component fixMul[m][n];
     for(var i=0;i<m;i++){
         for(var j=0;j<n;j++){
             out[i][j] <== a[i][j] * b[i][j];

@@ -8,16 +8,90 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-const {getShape,floatToQ,QToFloat,floatToQ_signed} = require('../basic_components/util');
+const {getShape,floatToQ,QToFloat,floatToQ_signed,truncate,truncateMatrix,fieldToReal} = require('../basic_components/util');
 const {matrixMultiplication,addBias,linear} = require('../basic_components/linear');
-const {softmax,softmax_} = require('../basic_components/softmax');
+const {layerNorm} = require('../basic_components/layerNorm');
+const {softmax,I_softmax2D, softmax_i} = require('../basic_components/softmax');
 
 const fs = require('fs');
 const { exit } = require("process");
-const { truncateMatrix } = require("../../build_witness_for_circuit/basic_components/util");
+const { get } = require("http");
+const { lastIndexOf } = require("b4a");
+const { floatToQ_matrix } = require("../../build_circuit/basic_components/util");
+
+function areMatricesEqual(matrixA, matrixB) {
+  if (matrixA.length !== matrixB.length || matrixA[0].length !== matrixB[0].length) {
+    return false;
+  }
+
+  for (let i = 0; i < matrixA.length; i++) {
+    for (let j = 0; j < matrixA[0].length; j++) {
+      if (matrixA[i][j] !== matrixB[i][j]) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+function matmulTruncate(matrixA, matrixB,fracBits) {
+  const rowsA = matrixA.length;
+  const columnsA = matrixA[0].length;
+  const columnsB = matrixB[0].length;
+
+  if (columnsA !== matrixB.length) {
+    throw new Error("Invalid matrix dimensions. Columns of matrixA must match rows of matrixB.");
+  }
+
+  let result = new Array(rowsA);
+  for (let i = 0; i < rowsA; i++) {
+    result[i] = new Array(columnsB);
+    for (let j = 0; j < columnsB; j++) {
+      result[i][j] = 0;
+      for (let k = 0; k < columnsA; k++) {
+        result[i][j] += matrixA[i][k] * matrixB[k][j];
+      }
+    }
+  }
 
 
+  result = truncateMatrix(result,fracBits)
+  return result;
+}
+function freivalds(a,b,c,fracBits){
+  let rand = [];
+  for(let i =0;i < b[0].length;i++){
+    rand[i] = [];
+    for(let j = 0; j < 1;j++){
+      rand[i][j] = 1;
+    }
+  }
+  let c_ = matrixMultiplication(a,b);
 
+  let lhs = matrixMultiplication(b,rand,fracBits);
+  lhs = matrixMultiplication(a,lhs,fracBits);
+  
+  let rhs =matrixMultiplication(c_,rand,fracBits);
+
+  if(areMatricesEqual(lhs,rhs) == false){
+    log("freivalds failed");
+    log(lhs);
+    log("=========================");
+    log(rhs);
+
+    exit();
+  }
+  else{
+    log("freivalds PASS");
+    log(lhs);
+    log("=========================");
+    log(rhs);
+
+    exit();
+  
+  }
+  
+}
 
 
 function splitToHeads(qkv, headNum) {
@@ -84,7 +158,7 @@ function divideByConstant(matrix, constant){
     const dividedRow = [];
 
     for (let j = 0; j < cols; j++) {
-      const dividedValue = row[j] / constant;
+      const dividedValue = Math.trunc(row[j] / constant);
       dividedRow.push(dividedValue);
     }
 
@@ -93,7 +167,7 @@ function divideByConstant(matrix, constant){
 
   return dividedMatrix;
 }
-function elementwiseMultiply(matrix1, matrix2) {
+function elementwiseMultiply(matrix1, matrix2,fracBits) {
   if (matrix1.length !== matrix2.length || matrix1[0].length !== matrix2[0].length) {
     throw new Error("Matrices must have the same dimensions.");
   }
@@ -105,7 +179,21 @@ function elementwiseMultiply(matrix1, matrix2) {
       result[i].push(matrix1[i][j] * matrix2[i][j]);
     }
   }
+  result = truncateMatrix(result,fracBits);
+  return result;
+}
+function elementwiseMultiplyNoTrunc(matrix1, matrix2,fracBits) {
+  if (matrix1.length !== matrix2.length || matrix1[0].length !== matrix2[0].length) {
+    throw new Error("Matrices must have the same dimensions.");
+  }
 
+  let result = [];
+  for (let i = 0; i < matrix1.length; i++) {
+    result.push([]);
+    for (let j = 0; j < matrix1[0].length; j++) {
+      result[i].push(matrix1[i][j] * matrix2[i][j]);
+    }
+  }
   return result;
 }
 function elementwiseAdd(matrix1, matrix2) {
@@ -139,34 +227,17 @@ function rotateHalf(x) {
     // const rotated = negatedX2.concat(x1);
     return rotated;
 }
-function applyRotaryPosEmb(q, k, cos, sin, positionIds,dim) {
+
+function applyRotaryPosEmb(q, k, cos, sin, positionIds,dim,fracBits) {
   let gather_indices = positionIds.map(element => [element]);
-  // console.log(getShape(gather_indices));
-  // console.log((gather_indices));
+
   gather_indices = gather_indices.map(row => Array(dim).fill(row[0]));
-  // console.log((gather_indices));
 
-
-  // for(let i=0;i<cos.length;i++){
-  //   for(let j=0;j<cos[0].length;j++){
-  //     cos[i][j] = cos[gather_indices[i][j]][j]; 
-  //     sin[i][j] = sin[gather_indices[i][j]][j]; 
-  //   }
-  // }
-  //store witness for circuit
-  const witness_sin = 'witness/ROPE_sin.txt';
-  saveWitnessToFile(sin, witness_sin);
-  const witness_cos = 'witness/ROPE_cos.txt';
-  saveWitnessToFile(cos, witness_cos);
+  let q_embed = elementwiseAdd(elementwiseMultiplyNoTrunc(q,cos,fracBits) , elementwiseMultiplyNoTrunc(rotateHalf(q),sin,fracBits));
+  let k_embed = elementwiseAdd(elementwiseMultiplyNoTrunc(k,cos,fracBits) , elementwiseMultiplyNoTrunc(rotateHalf(k),sin,fracBits));
   
-  // for(var i = 0; i <q.length; i++) {
-  //   for(var j = 0; j <q[0].length; j++){
-  //     console.log(q[i][j]);
-  //   }
-  // }
-  
-  q_embed = elementwiseAdd(elementwiseMultiply(q,cos) , elementwiseMultiply(rotateHalf(q),sin));
-  k_embed = elementwiseAdd(elementwiseMultiply(k,cos) , elementwiseMultiply(rotateHalf(k),sin));
+  q_embed = truncateMatrix(q_embed,fracBits);
+  k_embed = truncateMatrix(k_embed,fracBits);
 
   return [q_embed,k_embed];
 }
@@ -214,28 +285,11 @@ function computeROPE(dim, max_position_embedding){
 
 
 }
-function createMask(n) {
-  const matrix = [];
 
-  for (let i = 0; i < n; i++) {
-    matrix.push([]);
-    for (let j = 0; j < n; j++) {
-      if (i >= j) {
-        matrix[i][j] = 0; // Bottom-left region (including diagonal) contains 0
-      } else {
-        matrix[i][j] = -999999; // Top-right region contains -Infinity
-      }
-    }
-  }
 
-  return matrix;
-}
-function saveWitnessToFile(witness, filename) {
-  const data = witness.map(row => row.join(' ')).join('\n');
-  fs.writeFileSync(filename, data);
-}
-
-function attnHead(head,dim,sequence_length){
+function attnHead(head,dim,sequence_length,fracBits,head_idx,
+                  ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,
+                  keyQueryMM_head,keyQueryMM_head_aux){
     
   const q_k_v =  splitQKV(head);
   var query = q_k_v[0];
@@ -252,78 +306,84 @@ function attnHead(head,dim,sequence_length){
 
   const max_position_embedding = sequence_length;//32 for now
   let position_ids = Array.from({ length: max_position_embedding }, (_, index) => index);
-  const[sin, cos] = computeROPE(dim,max_position_embedding);
 
-  // //store witness for circuit. NOTE: This part was moved 
-  // const witness_sin = 'witness/ROPE_sin.txt';
-  // saveWitnessToFile(sin, witness_sin);
-  // const witness_cos = 'witness/ROPE_cos.txt';
-  // saveWitnessToFile(cos, witness_cos);
 
-  const[query_emb, key_emb] = applyRotaryPosEmb(query_rot,key_rot,cos,sin,position_ids,dim);
+  const[query_emb, key_emb] = applyRotaryPosEmb(query_rot,key_rot,ropeCos,ropeSin,position_ids,dim,fracBits);
+
 
   query = concatenateMatrices(query_emb,query_pass);
   key = concatenateMatrices(key_emb,key_pass);
-
   const keyT = transposeMatrix(key);
 
-  var queryKT = matrixMultiplication(query,keyT);
+  //freivalds
+  var queryKT = matmulTruncate(query,keyT,fracBits);
+  var queryKT_aux = matrixMultiplication(query,keyT);
+
+  //test freivalds algorithm
+
+
+  // log(queryKT);
   
 
+  keyQueryMM_head[head_idx] = queryKT;
+  keyQueryMM_head_aux[head_idx] = queryKT_aux;
 
   queryKT = divideByConstant(queryKT,8);
+ 
+
   //ADD MASKing
-  let mask = createMask(queryKT.length);
-  const witness_mask = 'witness/mask.txt';
-  saveWitnessToFile(mask, witness_mask);
   queryKT_masked = elementwiseAdd(queryKT,mask);
 
   //softmax
-
-
-  let softMaxOut = softmax(queryKT_masked);
+ 
+  let softMaxOut = I_softmax2D(queryKT_masked,fracBits);
 
   //multiply V
-
-
-  let out = matrixMultiplication(softMaxOut,value);
-
+  let out = matmulTruncate(softMaxOut,value,fracBits);
   return out;
 }
-function attn(input, weight, bias,weights_attn_final,biases_attn_final,
-            n,inNum, outNum, dim,fracBits,sequence_length,
-            layerID,initialLinearLayerMMOuts) {
+function attn(input, weight, bias,weights_attn_final,biases_attn_final,n,inNum, outNum, dim, fracBits,sequence_length,numHead,
+              ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,
+              layerID,initialLinearLayerMMOuts,keyQueryMM,keyQueryMM_aux) {
   // const query_key_value = linear(input, weight, bias,n,inNum, outNum,fracBits);
-  let query_key_value = matrixMultiplication(input,weight);
+  let query_key_value = matmulTruncate(input,weight,fracBits);
+  log(n,inNum,outNum);
 
   //save for Freidvalds
-  
   initialLinearLayerMMOuts[layerID] = query_key_value;
   query_key_value = addBias(query_key_value,bias);
 
-  const headsAll = splitToHeads(query_key_value,8);
+  const headsAll = splitToHeads(query_key_value,numHead);
   attnAllHeads = [];
-  for(let i = 0;i < 8;i++){
-    
+  let keyQueryMM_head = [];
+  let keyQueryMM_head_aux = [];
+
+  for(let i = 0;i < numHead;i++){
     const head = headsAll[i];
-    attnAllHeads[i] = attnHead(head,dim,sequence_length);
+    attnAllHeads[i] = attnHead(head,dim,sequence_length,fracBits,i,
+                              ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,
+                              keyQueryMM_head,keyQueryMM_head_aux);
   }
+  keyQueryMM[layerID] = keyQueryMM_head;
+  keyQueryMM_aux[layerID] = keyQueryMM_head_aux;
+
 
   let attn = [];
   let sizeQKV = getShape(attnAllHeads)[2];
   for(let i =0;i <n;i++){
     attn[i] = [];
-    for(let j =0;j <8*sizeQKV;j++){
+    for(let j =0;j <numHead*sizeQKV;j++){
         let headIdx = Math.floor(j / sizeQKV);
         let idx = j % sizeQKV;
         attn[i][j] = attnAllHeads[headIdx][i][idx];
     }
   }
-
  //final attention layer
- const final_attn = linear(attn,weights_attn_final,biases_attn_final,n,inNum,inNum,fracBits);
+//  let final_attn = linear(attn,weights_attn_final,biases_attn_final,n,inNum,inNum,fracBits);
+  let final_attn = matmulTruncate(attn,weights_attn_final,fracBits);
+  final_attn = addBias(final_attn,biases_attn_final);
 
- return final_attn;
+  return final_attn;
 }
 module.exports = {
   attn,

@@ -24,24 +24,26 @@ function layerNorm1D(input){
       sum += input[i];
     }
     let E = sum/n;
-    
     //find variance
     let sum2 = 0;
     for (let i = 0; i < n; i++) {
       sum2 += Math.pow(input[i] - E,2);//twice
     }
+
     let sum2_div_n = sum2 / n;
     let VAR = Math.sqrt(sum2_div_n); 
+
 
     //find layerNorm
     let LM = [];
     for (let i = 0; i < n; i++) {
       LM[i] = (input[i] - E)/VAR;
     }
+
     return LM;
 }
 
-function  layerNorm2D(input, gamma, beta) {
+function layerNorm2D(input, gamma, beta) {
   const rows = input.length;
   let output = [];
   for(let i=0;i<rows;i++){
@@ -74,11 +76,9 @@ function I_layerNorm1D(input,fracBits){
   for (let i = 0; i < n; i++) {
     sum2 += Math.pow(input[i] - E,2);//twice
   }
-
-  
   let sum2_div_n = Math.trunc(sum2 /n);
-  let VAR = squareRoot(sum2_div_n,fracBits);//single 
-
+  let VAR = squareRoot(sum2_div_n,16);//single 
+  
   //find layerNorm
   let LM = [];
   for (let i = 0; i < n; i++) {

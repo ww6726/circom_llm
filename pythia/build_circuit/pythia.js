@@ -13,25 +13,27 @@ const assert = chai.assert;
 const {gptLayer} = require("./llm_components/gptLayer");
 
 const fs = require('fs');
+const { exit } = require("process");
 
 
 
-function generateCircomFile(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits) {
+function generateCircomFile(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead) {
   const content = `pragma circom 2.0.0;
 include "../../circuits/pythia.circom";
 
-component main = Pythia(${numLayer},${n},${m},${p},${attention_dim},${mlp_Linear1_size},${fracBits});`;
+component main = Pythia(${numLayer},${n},${m},${p},${attention_dim},${mlp_Linear1_size},${fracBits},${numHead});`;
   fs.writeFileSync(path.join(__dirname, "/circom_runner", "pythia.circom"), content);
 }
 
 
 async function pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                         ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,
-                        numLayer,mlp_Linear1_size,n,m,p,dim,fracBits) {
-                    
-    
+                        numLayer,mlp_Linear1_size,n,m,p,dim,fracBits,numHead,
+                        initialLinearLayerMMOut,keyQueryMM,keyQueryMM_aux) {
+
+
   let circuit;
-  generateCircomFile(numLayer,n,m,p,dim,mlp_Linear1_size,fracBits);
+  generateCircomFile(numLayer,n,m,p,dim,mlp_Linear1_size,fracBits,numHead);
   circuit = await wasm_tester(path.join(__dirname, "/circom_runner", "pythia.circom"));
   const INPUT = {
       "in": input,
@@ -59,6 +61,11 @@ async function pythia(input, weights, biases,weights_attn_final,biases_attn_fina
       "gelu_b_neg": b_neg,
       "gelu_b": b,
       "gelu_c": c,
+
+
+      "initialLinearLayerMMOut" : initialLinearLayerMMOut,
+      "keyQueryMM" : keyQueryMM,
+      "keyQueryMM_aux": keyQueryMM_aux,
   }
   const witness = await circuit.calculateWitness(INPUT, true);
   var ret = [];

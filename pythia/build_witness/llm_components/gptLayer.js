@@ -23,9 +23,13 @@ const { exit } = require("process");
 
 
 function gptLayer(input, weight, bias,weights_attn_final,biases_attn_final,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,
-                    n,inNum, outNum,mlp_Linear1_size,dim,fracBits,sequence_length) {
-
-    let attention = attn(input, weight, bias,weights_attn_final,biases_attn_final,n,inNum, outNum, dim, fracBits,sequence_length);
+                    n,inNum, outNum,mlp_Linear1_size,dim,fracBits,sequence_length,
+                    layerID,initialLinearLayerMMOuts) {
+    let ln_out_first = layerNorm2D(input);
+    let attention = attn(ln_out_first, weight, bias,weights_attn_final,biases_attn_final,n,inNum, outNum, dim, fracBits,sequence_length,
+                    layerID,initialLinearLayerMMOuts);
+    log((attention));
+    exit();
     let ln_out = layerNorm2D(attention);
     let mlp_out = mlp(ln_out,weight_mlp_1,bias_mlp_1,weight_mlp_2,bias_mlp_2,n,inNum,mlp_Linear1_size,fracBits);
     

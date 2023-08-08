@@ -102,7 +102,6 @@ function L_i(x,fracBits){
 
 //i-gelu
 function gelu_i(x,fracBits){
-
   let q_root2 = Math.floor(Math.sqrt(2)*Math.pow(2,fracBits));
   let inv_q_root2 = Math.floor((1/Math.sqrt(2))*Math.pow(2,fracBits));  
 
@@ -110,11 +109,12 @@ function gelu_i(x,fracBits){
   let L_in = Math.floor(x * inv_q_root2 / (Math.pow(2,fracBits))) + ((x * inv_q_root2 / (Math.pow(2,fracBits))) < 0 ? 1 : 0);
 
   let L_out = L_i(L_in,fracBits);
-
+  L_out = Math.trunc(L_out / (Math.pow(2,3*fracBits)));
   let half = Math.floor(0.5 * Math.pow(2,fracBits));
 
-  let one_4times = Math.floor(Math.pow(2,4*fracBits));
-  let ret = Math.trunc((x * half * (one_4times + L_out)) / (Math.pow(2,6*fracBits)));
+  let one = Math.floor(Math.pow(2,fracBits));
+  let ret = Math.trunc((x * half * (one + L_out)) / (Math.pow(2,2*fracBits)));
+  
   return ret;
 }
 function gelu_i_1d(input,fracBits){
@@ -135,6 +135,6 @@ function gelu_i_2d(input,fracBits){
     gelu_,
     gelu_i,
     gelu2D,
-    gelu_i_2d,
+    gelu_i_2d
   };
   

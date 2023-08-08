@@ -32,29 +32,22 @@ function saveWitnessToFile2D(witness, filename) {
   fs.writeFileSync(filename, data);
 }
 
-function softmaxArray(inputArray) {
-  // Check if the inputArray is valid and non-empty
-  if (!Array.isArray(inputArray) || inputArray.length === 0) {
-    throw new Error('Input array must be a non-empty array.');
+function softmax_(arr) {
+  var softmaxArr = [];
+  var sum = 0;
+
+  // Calculate the exponential of each element and sum them
+  for (var i = 0; i < arr.length; i++) {
+    softmaxArr[i] = Math.exp(arr[i]);
+    sum += softmaxArr[i];
   }
 
-  // Calculate the maximum value in the inputArray to avoid numerical instability
-  const maxVal = Math.max(...inputArray);
-
-  // Calculate the sum of exponentials of the elements in the inputArray
-  let expSum = 0;
-  for (let i = 0; i < inputArray.length; i++) {
-    expSum += Math.exp(inputArray[i] - maxVal);
+  // Divide each element by the sum to normalize
+  for (var i = 0; i < softmaxArr.length; i++) {
+    softmaxArr[i] /= sum;
   }
 
-  // Calculate the softmax values for each element in the inputArray
-  const softmaxArray = [];
-  for (let i = 0; i < inputArray.length; i++) {
-    const softmaxValue = Math.exp(inputArray[i] - maxVal) / expSum;
-    softmaxArray.push(softmaxValue);
-  }
-
-  return softmaxArray;
+  return softmaxArr;
 }
 function L(p){
   let a = 0.3585;
@@ -71,7 +64,6 @@ function softmax(matrix) {
 
   for (let i = 0; i < rows; i++) {
     const row = matrix[i];
-   
     const max = Math.max(...row);
     const exponentials = row.map((value) => Math.exp(value - max));
     const sum = exponentials.reduce((acc, val) => acc + val, 0);
@@ -201,9 +193,13 @@ function softmax_i(q,fracBits){
   scale = 10*scale;
   let p_sum_inv = Math.floor(scale / p_sum);//this is gonna be a witness
 
+  let scale_original = Math.pow(2,fracBits);
   for(var i =0;i < p_exp.length;i++){
     p_outi[i] = p_exp[i] * p_sum_inv;
-    p_out[i] = p_outi[i]/scale;
+    p_out[i] = (p_outi[i]/scale);
+  }
+  for(var i =0;i < p_out.length;i++){
+    p_out[i] = Math.trunc(p_out[i]*scale_original);
   }
   // console.log(p_outi);
   // console.log(p_out);
@@ -211,17 +207,15 @@ function softmax_i(q,fracBits){
 
 }
 function I_softmax2D(input, fracBits){
-  let output = [];
-
+  let out = [];
   for(let i=0;i<input.length;i++){
-
-    output[i] = softmax_i(input[i],fracBits);
+    out[i] = softmax_i(input[i],fracBits);
   }
-  return output;
+  return out;
 } 
 module.exports = {
-    softmaxArray,
     softmax,
+    softmax_,
     softmax_poly,
     softmax_i,
     I_softmax2D,

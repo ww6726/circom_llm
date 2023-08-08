@@ -93,7 +93,6 @@ template Softmax1D(n, fracBits){
         zp[i].a_sm <== a_sm;
         zp[i].b_sm <== b_sm;
         zp[i].c_sm <== c_sm;
-
         q_exp[i] <== zp[i].out;
     }
     component findSum = Sum(n);

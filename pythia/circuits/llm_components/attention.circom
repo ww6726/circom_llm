@@ -4,10 +4,15 @@ include "../ml_components/Linear.circom";
 include "../ml_components/Split.circom";
 include "../matrix/Transpose.circom";
 include "../matrix/matmul.circom";
+include "../matrix/matmulNoTrunc.circom";
+
 include "../matrix/matEleMul.circom";
 include "../matrix/concat.circom";
 include "../util/fixedPoint.circom";
 include "../ml_components/Softmax.circom";
+include "../ml_components/LayerNorm.circom";
+
+include "../matrix/freivalds.circom";
 
 template rotaryHalf(m,n){//this is wrong. split it vertically
     signal input in[m][n];
@@ -57,6 +62,9 @@ template addRoPE(n, dim,fracbits){
     //     }
     // }
     //Compute q_emb
+
+
+
     component matEleMulQ[2];
     matEleMulQ[0] = matEleMul(n,dim);
     matEleMulQ[1] = matEleMul(n,dim);
@@ -71,7 +79,7 @@ template addRoPE(n, dim,fracbits){
     matEleSumTwoQ.a <== matEleMulQ[0].out;
     matEleSumTwoQ.b <== matEleMulQ[1].out;
     signal q_embed[n][dim] <== matEleSumTwoQ.out;
-     
+
     //Compute k_emb
     component matEleMulK[2];
     matEleMulK[0] = matEleMul(n,dim);
@@ -109,6 +117,8 @@ template addRoPE(n, dim,fracbits){
             k_embed_trunc[i][j] <== trunK[i][j].out;
         }
     }
+
+ 
 }
 template attention_single_head(n,headSize,dim,fracBits){
     signal input head[n][headSize];
@@ -122,6 +132,12 @@ template attention_single_head(n,headSize,dim,fracBits){
     signal input b_sm;
     signal input c_sm;
 
+    //freivalds
+    signal input keyQueryMM[n][n];//deprecated
+    signal input keyQueryMM_aux[n][n];//original for freivalds
+
+
+
     component splitQKV = Split(n,headSize,3);
     splitQKV.in <== head;
     var sizeQKV = headSize/3;
@@ -130,6 +146,7 @@ template attention_single_head(n,headSize,dim,fracBits){
     signal query[n][sizeQKV] <== q_k_v[0];
     signal key[n][sizeQKV] <== q_k_v[1];
     signal value[n][sizeQKV] <== q_k_v[2];
+
 
 
     //add RoPE positional embedding
@@ -160,7 +177,7 @@ template attention_single_head(n,headSize,dim,fracBits){
 
     signal query_embed[n][dim] <== RoPE.q_embed_trunc;
     signal key_embed[n][dim] <== RoPE.k_embed_trunc;
-    
+
 
 
     signal query_new[n][sizeQKV];
@@ -179,11 +196,23 @@ template attention_single_head(n,headSize,dim,fracBits){
     trans.in <== key_new;
     signal keyT[sizeQKV][n] <== trans.out;
 
-    //compute Q*KT
-    component mm_QKT = matmul(n,sizeQKV,n,fracBits);
-    mm_QKT.a <== query_new;
-    mm_QKT.b <== keyT;
-    signal QKT[n][n] <== mm_QKT.c;
+    // //OLD: compute Q*KT
+    // component mm_QKT = matmul(n,sizeQKV,n,fracBits);
+    // mm_QKT.a <== query_new;
+    // mm_QKT.b <== keyT;
+    // signal QKT[n][n] <== mm_QKT.c;
+
+
+    //NEW freivalds
+    component fv_qkt = FreivaldsWithUntruncatedResult(n,sizeQKV,n,fracBits);
+    fv_qkt.a <== query_new;
+    fv_qkt.b <== keyT;
+    fv_qkt.c <== keyQueryMM_aux;
+    signal QKT[n][n] <== fv_qkt.out;
+
+    log("finish head");
+
+
 
     // elementwise divide by 8 which is same as  truncate right 3 bits
     signal QKT_div_8[n][n];
@@ -198,6 +227,8 @@ template attention_single_head(n,headSize,dim,fracBits){
 
         }
     }  
+        
+
     // add mask
     signal QKT_MASKED[n][n];
     for(var i=0;i<n;i++){
@@ -217,6 +248,7 @@ template attention_single_head(n,headSize,dim,fracBits){
 
 
     signal softmax_out[n][n] <== sm.out;
+  
 
     //multiply with V
     component mm = matmul(n,n,sizeQKV,fracBits);
@@ -226,7 +258,7 @@ template attention_single_head(n,headSize,dim,fracBits){
     signal output out[n][sizeQKV] <== mm.c;
 
 }
-template attention(n,m,p,dim,fracbits){
+template attention(n,m,p,dim,fracbits,numHead){
     signal input in_first_layer[n][m];
     signal input weights_first_layer[m][p];
     signal input bias_first_layer[n][p];
@@ -244,26 +276,42 @@ template attention(n,m,p,dim,fracbits){
     signal input b_sm;
     signal input c_sm;
 
-    component linear_qkv = Linear(n,m,p,fracbits);
+    //freivalds
+    signal input initialLinearLayerMMOut[n][p];
+    signal input keyQueryMM[numHead][n][n];
+    signal input keyQueryMM_aux[numHead][n][n];
 
-    linear_qkv.in <== in_first_layer;
-    linear_qkv.weights <== weights_first_layer;
-    linear_qkv.bias <== bias_first_layer;
-    signal query_key_value[n][p] <== linear_qkv.out;
+    // //old
+    // component linear_qkv = Linear(n,m,p,fracbits);
+    // linear_qkv.in <== in_first_layer;
+    // linear_qkv.weights <== weights_first_layer;
+    // linear_qkv.bias <== bias_first_layer;
+    // signal query_key_value[n][p] <== linear_qkv.out;
+
+    //new freivald optimization
+    component fv_initialLinearLayer = Freivalds(n,m,p,fracbits);
+    fv_initialLinearLayer.a <== in_first_layer;
+    fv_initialLinearLayer.b <== weights_first_layer;
+    fv_initialLinearLayer.c <== initialLinearLayerMMOut;
+    component addBias_initialLinearLayer = matEleSumTwo(n,p);
+    addBias_initialLinearLayer.a <== fv_initialLinearLayer.out;
+    addBias_initialLinearLayer.b <== bias_first_layer;
+    signal query_key_value[n][p] <== addBias_initialLinearLayer.out;
+    log("finish first Linear Layer");
+
    
     //split into heads
-    var numHeads = 8;
-    component splitHeads = Split(n,p,numHeads);
+    component splitHeads = Split(n,p,numHead);
     splitHeads.in <== query_key_value;
     
-    var headSize = p/numHeads;
-    signal headsAll[numHeads][n][headSize] <== splitHeads.out;
+    var headSize = p/numHead;
+    signal headsAll[numHead][n][headSize] <== splitHeads.out;
     
     //split into q ,k ,v
-    component attn_head[8]; 
+    component attn_head[numHead]; 
     var sizeQKV = headSize/3;
-    signal multiHeadAttnOut[numHeads][n][sizeQKV];
-    for(var head_i=0;head_i<8;head_i++){
+    signal multiHeadAttnOut[numHead][n][sizeQKV];
+    for(var head_i=0;head_i<numHead;head_i++){
         attn_head[head_i]= attention_single_head(n,headSize,dim,fracbits);
         attn_head[head_i].head <== headsAll[head_i];
         attn_head[head_i].rope_cos <== rope_cos;
@@ -273,24 +321,28 @@ template attention(n,m,p,dim,fracbits){
         attn_head[head_i].a_sm <== a_sm;
         attn_head[head_i].b_sm <== b_sm;
         attn_head[head_i].c_sm <== c_sm;
+        //freivalds
+        attn_head[head_i].keyQueryMM <== keyQueryMM[head_i];
+        attn_head[head_i].keyQueryMM_aux <== keyQueryMM_aux[head_i];
+
         multiHeadAttnOut[head_i] <== attn_head[head_i].out;
     }
     //merge all heads
-    signal mergedOut[n][8*sizeQKV];
+    signal mergedOut[n][numHead*sizeQKV];
     for(var i =0;i<n;i++){
-        for(var j =0;j<8*sizeQKV;j++){
+        for(var j =0;j<numHead*sizeQKV;j++){
             var headIdx = j \ sizeQKV;
             var idx = j % sizeQKV;
             mergedOut[i][j] <== multiHeadAttnOut[headIdx][i][idx];
         }
     }
     //final linear layer
-    component linear_final = Linear(n, 8*sizeQKV,8*sizeQKV,fracbits);
+    component linear_final = Linear(n, numHead*sizeQKV,numHead*sizeQKV,fracbits);
     linear_final.in <== mergedOut;
     linear_final.weights <== weight_attn_final;
     linear_final.bias <== bias_attn_final;
 
-    signal output out[n][8*sizeQKV] <== linear_final.out;
+    signal output out[n][numHead*sizeQKV] <== linear_final.out;
 
 }
 

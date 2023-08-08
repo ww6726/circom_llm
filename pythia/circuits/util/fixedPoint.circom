@@ -77,7 +77,20 @@ template truncate(bits_total, bits_want){
 
     signal output out <== temp*sign;
 }
+template truncateMatrix(n,m,fracBits){
+    signal input in[n][m];
+    component trun[n][m];
+    signal output out[n][m];
+    var bitsTotal = 32;
 
+    for(var i=0;i<n;i++){
+        for(var j=0;j<m;j++){
+            trun[i][j] = truncate(bitsTotal,bitsTotal-fracBits);
+            trun[i][j].in <== in[i][j];
+            out[i][j] <== trun[i][j].out;
+        }
+    }
+}
 template Sum(n){
     signal input in[n];
     signal output out;
@@ -208,7 +221,7 @@ template squareRoot(){
     signal temp2[size];
     signal r2[size];
 
-    while(i < 11){
+    while(i < 20){
         temp1[i] <-- in \ x[i];
         r1[i] <-- in % x[i];
         in === x[i]*temp1[i] + r1[i];

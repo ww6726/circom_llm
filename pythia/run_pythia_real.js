@@ -15,6 +15,17 @@ const {pythia} = require('./build_witness/pythia');
 
 const {softmax,softmax_,softmax_poly,softmax_poly_i} = require('./build_witness/basic_components/softmax');
 const { log } = require("console");
+const fs = require('fs');
+
+async function read3DWitness(filePath) {
+  try {
+    const data = await fs.promises.readFile(filePath, 'utf8');
+    const parsedData = JSON.parse(data);
+    return parsedData;
+  } catch (err) {
+    throw err;
+  }
+}
 
 
 function getShape(data) {
@@ -191,7 +202,7 @@ describe("main function for generating witness and verifying", function () {
           for(var i =0;i<m;i++){
             weights_mlp_1st[l][i] = [];
             for(var j =0;j<mlp_Linear1_size;j++){
-              weights_mlp_1st[l][i][j] = i*j;
+              weights_mlp_1st[l][i][j] = i+j;
             }
           }
         }
@@ -200,7 +211,7 @@ describe("main function for generating witness and verifying", function () {
           for(var i =0;i<n;i++){
             biases_mlp_1st[l][i] = [];
             for(var j =0;j<mlp_Linear1_size;j++){
-              biases_mlp_1st[l][i][j] = i*j;
+              biases_mlp_1st[l][i][j] = i+j;
             }
           }
         }
@@ -210,7 +221,7 @@ describe("main function for generating witness and verifying", function () {
           for(var i =0;i<mlp_Linear1_size;i++){
             weights_mlp_2nd[l][i] = [];
             for(var j =0;j<m;j++){
-              weights_mlp_2nd[l][i][j] = i*j;
+              weights_mlp_2nd[l][i][j] = i+j;
             }
           }
         }
@@ -219,7 +230,7 @@ describe("main function for generating witness and verifying", function () {
           for(var i =0;i<n;i++){
             biases_mlp_2nd[l][i] = [];
             for(var j =0;j<m;j++){
-              biases_mlp_2nd[l][i][j] = i*j;
+              biases_mlp_2nd[l][i][j] = i+j;
             }
           }
         }
@@ -229,7 +240,17 @@ describe("main function for generating witness and verifying", function () {
 
         let pythia_out = pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
                                 numLayer,mlp_Linear1_size,n,m,p,dim,fracBits,sequence_length);
-                                
-          log(pythia_out);
+
+ 
+    //read into array3d
+
+  
+
+
+
+
+
+
+    
     });
-});
+  });

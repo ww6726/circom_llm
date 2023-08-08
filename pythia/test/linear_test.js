@@ -77,7 +77,7 @@ describe("test linear module", function () {
             input_[i] = [];
 
             for (let j = 0; j < inNum; j++) {
-                const number = Math.random() * 8 - 4;
+                const number = i+j;
                 input[i][j] = floatToQ(N,M,number);
                 input_[i][j] = number;
             }
@@ -87,7 +87,7 @@ describe("test linear module", function () {
             weight_[i] = [];
 
             for (let j = 0; j < outNum; j++) {
-                const number = Math.random() * 8 - 4;
+                const number = i+j;
                 weight[i][j] = floatToQ(N,M,number);
                 weight_[i][j] = number;
             }
@@ -97,7 +97,7 @@ describe("test linear module", function () {
             bias_[i] = [];
 
             for (let j = 0; j < outNum; j++) {
-                const number = Math.random() * 8 - 4;
+                const number = i+j;
                 bias[i][j] = floatToQ(N,M,number);
                 bias_[i][j] = number;
             }

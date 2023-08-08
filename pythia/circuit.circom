@@ -221,12 +221,58 @@ template small(){
 template matmultest(n,m,p,fracBits){
     signal input a[n][m];
     signal input b[m][p];
+    signal input c[n][p];
     component mm = matmul(n,m,p,fracBits);
     mm.a <== a;
     mm.b <== b;
-    signal output out[n][p] <== mm.c;
-}
-component main = matmultest(10,10,10,8);
 
-// component main = Pythia(6,32,32,96,2,128,8);
+    signal output out[n][p] <== mm.c;
+    log(" ============== circuit eval completed =================");
+
+}
+
+template freidvalds_matmult(n,m,p,fracBits){
+    signal input a[n][m];
+    signal input b[m][p];
+    signal input c[n][p];
+    
+    signal random[p][1];
+    for (var i = 0; i < p; i++){
+        random[i][0] <== i;
+    }
+    component mm1 = matmul(m,p,1,fracBits);
+    mm1.a <== b;
+    mm1.b <== random;
+    component mm3 = matmul(n,m,1,fracBits);
+    mm3.a <== a;
+    mm3.b <== mm1.c;
+
+    component mm2 = matmul(n,p,1,fracBits);
+    mm2.a <== c;
+    mm2.b <== random;
+    for(var i = 0;i<n;i++){
+
+        mm2.c[i][0] === mm3.c[i][0];
+
+    }
+    signal output out[n][p];
+    for(var i=0;i<n;i++){
+        for(var j=0;j<p;j++){
+            out[i][j] <== c[i][j];
+        }
+    }
+    // log("======= lhs ========");
+    // for(var i=0;i<n;i++){
+    //     log(mm3.c[i][0]);
+    // }
+    // log("======= rhs ========");
+    // for(var i=0;i<n;i++){
+    //     log(mm2.c[i][0]);
+    // }
+    log(" ============== circuit eval completed =================");
+}
+
+// component main = freidvalds_matmult(64,64,64,8);
+component main = freidvalds_matmult(32,32,32,8);
+// component main = Pythia(1,32,32,96,2,4,8);
 //  component main = multi_concat_test();       

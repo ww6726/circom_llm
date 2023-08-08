@@ -9,7 +9,7 @@ const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
 
-const {layerNorm2D} = require('./basic_components/layerNorm');
+const {I_layerNorm2D} = require('./basic_components/layerNorm');
 const {gptLayer} = require('./llm_components/gptLayer');
 
 const fs = require('fs');
@@ -34,22 +34,32 @@ function save3DWitnessToFile(witness, filename) {
 }
     
 function pythia(input, weights, biases,weights_attn_final,biases_attn_final,weights_mlp_1st,biases_mlp_1st,weights_mlp_2nd,biases_mlp_2nd,
-                    numLayer,mlp_Linear1_size,n,m,p,dim,fracBits,sequence_length) {
+                ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,
+                numLayer,numHead,mlp_Linear1_size,n,m,p,dim,fracBits,sequence_length) {
 
 
     let gptLayerOut = input;
     //store witness for freidvalds
     let initialLinearLayerMMOut = [];
-    for(var i=0;i<numLayer;i++){    
+    keyQueryMM = [];keyQueryMM_aux = [];
+    for(var i=0;i<numLayer;i++){
         gptLayerOut = gptLayer(gptLayerOut, weights[i], biases[i],weights_attn_final[i],biases_attn_final[i],weights_mlp_1st[i],biases_mlp_1st[i],weights_mlp_2nd[i],biases_mlp_2nd[i],
-                                    n,m,p,mlp_Linear1_size,dim,fracBits,sequence_length,
-                                    i,initialLinearLayerMMOut);
-    }           
+                                    ropeCos,ropeSin,mask,qln2,a_sm,b_sm,c_sm,q_root2_inv,a,b_neg,b,c,                          
+                                    n,m,p,mlp_Linear1_size,dim,fracBits,sequence_length,numHead,
+                                    i,initialLinearLayerMMOut,keyQueryMM,keyQueryMM_aux);
+    }  
+    // log(keyQueryMM[0][0]);
+    // exit();
     const witness_initialLinearLayerMMOut = 'witness/initialLinearLayerMMOut.txt';
     save3DWitnessToFile(initialLinearLayerMMOut, witness_initialLinearLayerMMOut);
-    
+
+    const witness_keyQueryMM = 'witness/keyQueryMM.txt';
+    save3DWitnessToFile(keyQueryMM, witness_keyQueryMM);
+    const witness_keyQueryMM_aux = 'witness/keyQueryMM_aux.txt';
+    save3DWitnessToFile(keyQueryMM_aux, witness_keyQueryMM_aux);
+
     // final layerNorm 
-    let out = layerNorm2D(gptLayerOut,fracBits);
+    let out = I_layerNorm2D(gptLayerOut,fracBits);
     return out;
 }
 module.exports = {

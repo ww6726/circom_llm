@@ -8,16 +8,7 @@ exports.p = Scalar.fromString("2188824287183927522224640574525727508854836440041
 const Fr = new F1Field(exports.p);
 const F = exports.p;
 const assert = chai.assert;
-function fieldToReal(input,fracBits){
-  const out = []
-  for (let i = 0; i < input.length; i++) {
-      out[i] = [];
-      for (let j = 0; j < input[0].length; j++) {
-          out[i][j] = parseFloat(Fr.toString(input[i][j])) / (2**(fracBits));
-      }
-  }
-  return out;
-}
+
 function addNumbers(a, b) {
     return a + b;
 }
@@ -29,6 +20,17 @@ function q16_16ToFloat(value) {
 }  
 function print(a){
     console.log(a);
+}
+function truncateMatrix(matrix, fracBits) {
+  const rows = matrix.length;
+  const columns = matrix[0].length;
+
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < columns; j++) {
+      matrix[i][j] = Math.trunc(matrix[i][j] / Math.pow(2,fracBits));
+    }
+  }
+  return matrix;
 }
 function matrixMultiplication(matrixA, matrixB) {
   const rowsA = matrixA.length;
@@ -210,9 +212,9 @@ function truncate(matrix, fracBits) {
       matrix[i][j] = (parseFloat(Fr.toString(matrix[i][j])) >> ((fracBits)));
     }
   }
-
   return matrix;
 }
+
 function test_conversion(){
     const N = 6;
     const M = 8;
@@ -243,6 +245,55 @@ function test_conversion(){
     console.log(`QN.M cValue: ${cValue}`);
 
 }
+function fieldToReal(input,fracBits){
+  const out = []
+  for (let i = 0; i < input.length; i++) {
+      out[i] = [];
+      for (let j = 0; j < input[0].length; j++) {
+          out[i][j] = ((input[i][j]) / (2**(fracBits)));
+      }
+  }
+  return out;
+}
+function matmulTruncate(matrixA, matrixB,fracBits) {
+  const rowsA = matrixA.length;
+  const columnsA = matrixA[0].length;
+  const columnsB = matrixB[0].length;
+
+  if (columnsA !== matrixB.length) {
+    throw new Error("Invalid matrix dimensions. Columns of matrixA must match rows of matrixB.");
+  }
+
+  let result = new Array(rowsA);
+  for (let i = 0; i < rowsA; i++) {
+    result[i] = new Array(columnsB);
+    for (let j = 0; j < columnsB; j++) {
+      result[i][j] = 0;
+      for (let k = 0; k < columnsA; k++) {
+        result[i][j] += matrixA[i][k] * matrixB[k][j];
+      }
+    }
+  }
+
+
+  result = truncateMatrix(result,fracBits)
+  return result;
+}
+function elementwiseAdd(matrix1, matrix2) {
+  if (matrix1.length !== matrix2.length || matrix1[0].length !== matrix2[0].length) {
+    throw new Error("Matrices must have the same dimensions.");
+  }
+
+  const result = [];
+  for (let i = 0; i < matrix1.length; i++) {
+    result.push([]);
+    for (let j = 0; j < matrix1[0].length; j++) {
+      result[i].push(matrix1[i][j] + matrix2[i][j]);
+    }
+  }
+
+  return result;
+}
 
 // test_conversion_old();
 
@@ -255,6 +306,9 @@ module.exports = {
     getShape,  
     matrixMultiplication,
     truncate,
+    truncateMatrix,
     fieldToReal,
-
+    matmulTruncate,
+    elementwiseAdd,
+    
 };

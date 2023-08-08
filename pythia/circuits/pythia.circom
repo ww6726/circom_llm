@@ -6,7 +6,8 @@ include "ml_components/LayerNorm.circom";
 include "llm_components/attention.circom";
 include "llm_components/GPTLayer.circom";
 
-template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits){
+template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead){
+
      signal input in[n][m];
     //attention weights, bias
     signal input weights[numLayer][m][p];
@@ -35,14 +36,20 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits){
     signal input gelu_b_neg;
     signal input gelu_b;
     signal input gelu_c;
+    //freivalds
+    signal input initialLinearLayerMMOut[numLayer][n][p];
+    signal input keyQueryMM[numLayer][numHead][n][n];
+    signal input keyQueryMM_aux[numLayer][numHead][n][n];
+
+
     //Begin
     component gptLayers[numLayer];
     signal gptLayerOutputs[numLayer+1][n][m];
     gptLayerOutputs[0] <== in;
     var idx = 0;
     for(var i =0;i<numLayer;i++){
-        log("========= Layer Done =============");
-        gptLayers[i] = gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits);
+        log("========= Layer i Done =============");
+        gptLayers[i] = gptLayer(n,m,p,attention_dim,mlp_Linear1_size,fracBits,numHead);
         gptLayers[i].in <== gptLayerOutputs[idx];
         gptLayers[i].weight <== weights[i];
         gptLayers[i].bias <== biases[i];
@@ -66,6 +73,11 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits){
         gptLayers[i].gelu_b_neg <== gelu_b_neg;
         gptLayers[i].gelu_b <== gelu_b;
         gptLayers[i].gelu_c <== gelu_c;
+        //freivalds
+        gptLayers[i].initialLinearLayerMMOut <== initialLinearLayerMMOut[i];
+        gptLayers[i].keyQueryMM <== keyQueryMM[i];
+        gptLayers[i].keyQueryMM_aux <== keyQueryMM_aux[i];
+
         idx = idx + 1;
         gptLayerOutputs[idx] <== gptLayers[i].out;
         
@@ -77,6 +89,12 @@ template Pythia(numLayer,n,m,p,attention_dim,mlp_Linear1_size,fracBits){
 
     //output
     signal output out[n][m] <== final_LM.out;
+
+    // for(var i=0;i<n;i++){
+    //     for(var j=0;j<m;j++){
+    //         log(out[i][j]);
+    //     }
+    // }
 
 
 

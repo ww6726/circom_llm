@@ -7,6 +7,7 @@ circuit_eval_start=$(date +%s)
 circom circuit.circom --r1cs  --c 
 circuit_eval_end=$(date +%s)
 circuit_eval_time=$((circuit_eval_end - circuit_eval_start))
+echo "Circuit evaluation time: ${circuit_eval_time} seconds"
 
 #generate the witness file
 # cd circuit_js
@@ -22,6 +23,8 @@ circuit_eval_time=$((circuit_eval_end - circuit_eval_start))
 # echo "$json_content" > input.json
 # auto-generate input for mm
 node generate_matrix.js
+# node generate_input.js
+
 # cp input.json circuit_js
 # cd circuit_js
 # node generate_witness.js circuit.wasm input.json witness.wtns
@@ -32,16 +35,16 @@ cp ../input.json .
 cp ../circuit.r1cs .
 ./circuit input.json witness.wtns
 
-
-#Phase 1, this step is independent of circuit, start and participate in the ceremony of tau#
-# this can only run once?
-snarkjs powersoftau new bn128 21 pot12_0000.ptau -v
-snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="First contribution" -v
-snarkjs powersoftau prepare phase2 pot12_0001.ptau pot12_final.ptau -v
+# #Phase 1, this step is independent of circuit, start and participate in the ceremony of tau#
+# # this can only run once?
+# snarkjs powersoftau new bn128 12 pot12_0000.ptau -v
+# snarkjs powersoftau contribute pot12_0000.ptau pot12_0001.ptau --name="First contribution" -v
+# snarkjs powersoftau prepare phase2 pot12_0001.ptau pot12_final.ptau -v
 
 
 # use this if above is commented
-# cp ../pot12_final.ptau .
+cp ../pot12_final.ptau .
+
 #Phase 2
 generate_key_start=$(date +%s)
 snarkjs groth16 setup circuit.r1cs pot12_final.ptau circuit_0000.zkey

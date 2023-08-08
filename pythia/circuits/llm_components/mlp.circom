@@ -22,6 +22,9 @@ template MLP(n,m,p,fracBits){
     l1.in <== in;
     l1.weights <== weight1;
     l1.bias <== bias1;
+
+    
+   
     //compute 2d gelu
     component gelu = Gelu2D(n,p,fracBits);
     gelu.in <== l1.out;
@@ -30,15 +33,19 @@ template MLP(n,m,p,fracBits){
     gelu.gelu_b_neg <== gelu_b_neg;
     gelu.gelu_b <== gelu_b;
     gelu.gelu_c <== gelu_c;
+
+
+
     //compute second layer
     component l2 = Linear(n,p,m,fracBits);
     l2.in <== gelu.out;
     l2.weights <== weight2;
     l2.bias <== bias2;
 
+   
     signal output out[n][m] <== l2.out;
 
-
+  
 
 
 }

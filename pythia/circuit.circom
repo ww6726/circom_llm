@@ -1,6 +1,8 @@
 pragma circom 2.0.3;
 include "circuits/matrix/innerProd.circom";
 include "circuits/matrix/matmul.circom";
+include "circuits/matrix/matmulNoTrunc.circom";
+
 include "circuits/ml_components/ReLU.circom";
 include "circuits/ml_components/Linear.circom";
 include "circuits/util/fixedPoint.circom";
@@ -10,6 +12,10 @@ include "circuits/util/min.circom";
 include "circuits/circomlib/comparators.circom";
 include "circuits/matrix/concat.circom";
 include "circuits/pythia.circom";
+include "circuits/ml_components/Softmax.circom";
+include "circuits/ml_components/GeLU.circom";
+include "circuits/ml_components/LayerNorm.circom";
+
 /*
     This code is a playground to test circuit correctness for numerous operations.
     Every computation needs to work here first prior being put into larger circuits.
@@ -272,8 +278,14 @@ template freidvalds_matmult(n,m,p,fracBits){
     log(" ============== circuit eval completed =================");
 }
 
-// component main = freidvalds_matmult(64,64,64,8);
+component main = freidvalds_matmult(2048,512,1536,8);
 // component main = freidvalds_matmult(32,32,32,8);
-// component main = Pythia(1,32,32,96,2,4,8);
-component main = Pythia(6,32,32,96,2,4,8,8);
+// component main = Pythia(6,32,32,96,2,4,8,8);
+
+// component main = Softmax(64,64,8);
+// component main = Gelu2D(4,4,8);
+// component main = LayerNorm(64,64,8);
+// component main = matmul(1,1,1,8);
+// component main = matmulNoTruncation(64,64,64,8);
+
 //  component main = multi_concat_test();       

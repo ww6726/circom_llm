@@ -49,43 +49,80 @@ function getShape(data) {
 let N = 4;// deprecated. Remove this later
 
   let fracBits = 8;
-  let same = 64;
-  let n = same;
-  let m = same;
-  let p = same;
+  let same = 512;
+  let n = 2048;
+  let m = 512;
+  let p = 1536;
 
 //matrices
-  let a = [];
-  let b = [];
+  let matrix_a = [];
+  let matrix_b = [];
   //freidvald
-  let c = [];
+  let matrix_c = [];
 
   //initialize all winesses (soon be replaced by real witnesses)
   for(var i =0;i<n;i++){
-    a[i] = [];
+    matrix_a[i] = [];
     for(var j =0;j<m;j++){
-        a[i][j] = floatToQ(N,fracBits,i+j);
+      matrix_a[i][j] = floatToQ(N,fracBits,i+j);
     }
   }
   for(var i =0;i<m;i++){
-    b[i] = [];
+    matrix_b[i] = [];
     for(var j =0;j<p;j++){
-        b[i][j] = floatToQ(N,fracBits,i+j);
+      matrix_b[i][j] = floatToQ(N,fracBits,i+j);
     }
   }
-  c = matrixMultiplication(a,b);
+  matrix_c = matrixMultiplication(matrix_a,matrix_b);
   for(var i =0;i<n;i++){
     for(var j =0;j<p;j++){
-        c[i][j] = c[i][j] / Math.pow(2,8);
+      matrix_c[i][j] = matrix_c[i][j] / Math.pow(2,8);
     }
   }
+// test matmul
 
-const INPUT = {
-  a: a,
-  b: b,
-  c: c,
+  const INPUT = {
+    "a": matrix_a,
+    "b": matrix_b,
+    "c": matrix_c
+  } 
 
-}
+
+// //test softmax  about 140 gates per number
+//   let qln2 = floatToQ(4,fracBits,Math.log(2));
+//   let a_sm = floatToQ(4,2*fracBits,0.3585);
+//   let b_sm = floatToQ(4,fracBits,1.353);
+//   let c_sm = floatToQ(4,4*fracBits,0.344);
+// const INPUT = {
+//   "in": matrix_a,
+//   "qln2": qln2,
+//   "a_sm": a_sm,
+//   "b_sm": b_sm,
+//   "c_sm": c_sm
+// }
+
+// // test GeLU
+//   let q_root2_inv = Math.floor((1/Math.sqrt(2))*Math.pow(2,fracBits));  
+//   let a = Math.floor(-0.2888*Math.pow(2,2*fracBits));
+//   let b_neg = Math.floor(1.769*Math.pow(2,fracBits));
+//   let b = Math.floor(-1.769*Math.pow(2,fracBits));
+//   let c = Math.floor(1* Math.pow(2,4*fracBits));
+
+//   const INPUT = {
+//   "in": matrix_a,
+//   "q_root2_inv": q_root2_inv,
+//   "gelu_a": a,
+//   "gelu_b_neg": b_neg,
+//   "gelu_b": b,
+//   "gelu_c": c
+// }
+
+// // test LayerNorm
+
+//   const INPUT = {
+//     "in": matrix_a
+//   } 
+
 
 const inputJson = JSON.stringify(INPUT);
 
@@ -96,3 +133,4 @@ fs.writeFile('input.json', inputJson, (err) => {
     console.log('Input data written to file successfully!');
   }
 });
+log("========== witness done =============");

@@ -1,0 +1,40 @@
+.
+|-- basic_components
+|   |-- arithmetics.js
+|   |-- gelu.js
+|   |-- layerNorm.js
+|   |-- linear.js
+|   |-- matmul.js
+|   |-- max.js
+|   |-- softmax.js
+|   |-- split.js
+|   |-- transpose.js
+|   |-- truncate.js
+|   `-- util.js
+|-- circom_runner
+|   |-- add.circom
+|   |-- attention.circom
+|   |-- div.circom
+|   |-- gelu.circom
+|   |-- gptlayer.circom
+|   |-- layerNorm.circom
+|   |-- linear.circom
+|   |-- matmul.circom
+|   |-- max.circom
+|   |-- mlp.circom
+|   |-- mul.circom
+|   |-- pythia.circom
+|   |-- softmax.circom
+|   |-- split.circom
+|   |-- sqrt.circom
+|   |-- sub.circom
+|   |-- transpose.circom
+|   `-- truncate.circom
+|-- dir.txt
+|-- llm_components
+|   |-- attention.js
+|   |-- gptLayer.js
+|   `-- mlp.js
+`-- pythia.js
+
+3 directories, 34 files

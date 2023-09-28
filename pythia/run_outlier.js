@@ -62,14 +62,14 @@ function getShape(data) {
   }
 
   function krum_avg(weights, numNeighbor, numMalicious){
+    log(getShape(weights));
+
     Sk = [];
     m = numNeighbor;
     f = numMalicious;
     for(var i =0;i<weights.length;i++){
-        weight_i = weights[i];
-        Sk.push(compute_krum_score(weight_i,i,m,f));
+        Sk.push(compute_krum_score(weights,i,m,f));
     }
-
     //find avg model
     weights_avg = [];
     numWeights = weights.length;
@@ -77,7 +77,7 @@ function getShape(data) {
     m = weights[0][0].length;
     for(var i =0;i<n;i++){
       weights_avg[i] = [];
-      for(var j =0;j<m;j++){
+      for(var j = 0; j<m;j++){
         let vec_all = 0;
         for(var k = 0;k<numWeights;k++){
           vec_all += weights[k][i][j];
@@ -94,19 +94,20 @@ function getShape(data) {
     d = [];
     L = weights.length;
     for(var j =0;j<L;j++){
-        if(j!=i){
-            d.push(l2(weights[i],weights[j]))
-        }
+      if(j!=i){
+        d.push(l2(weights[i],weights[j]))
+      }
         weight_i = weights[i];
     }
+    d = d.sort();
     //compute score
+    score_i = sumVector(d,L-f-3);
 
-    score_i = sumVector(d);
     return score_i;
   }
-  function sumVector(vector) {
+  function sumVector(vector,n) {
     let sum = 0;
-    for (let i = 0; i < vector.length; i++) {
+    for (let i = 0; i < n; i++) {
         sum += vector[i];
     }
     return sum;
@@ -122,7 +123,6 @@ function getShape(data) {
             squaredDiffsSum += Math.pow(matrixA[i][j] - matrixB[i][j], 2);
         }
     }
-
     const distance = Math.sqrt(squaredDiffsSum);
     return distance;
 }
@@ -168,7 +168,7 @@ describe("main function for building circuit", function () {
             }
           }
          }
-
+        
 
  
         weight_avg = krum_avg(weights,numNeighbor,numMalicious);
